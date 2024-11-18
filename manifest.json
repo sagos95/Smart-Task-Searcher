@@ -1,0 +1,13 @@
+{
+    "manifest_version": 3,
+    "name": "Tasks Searcher Extension",
+    "version": "0.1",
+    "permissions": ["activeTab", "scripting"],
+    "host_permissions": ["https://*.kaiten.ru/*"],
+    "content_scripts": [
+        {
+            "matches": ["https://*.kaiten.ru/*"],
+            "js": ["main.js"]
+        }
+    ]
+}
