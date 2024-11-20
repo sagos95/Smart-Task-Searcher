@@ -12,5 +12,9 @@
             "matches": ["https://*.kaiten.ru/*"],
             "js": ["main.js"]
         }
-    ]
+    ],
+    "web_accessible_resources": [{
+        "matches": ["https://*.kaiten.ru/*"],
+        "resources": ["local-settings.js"]
+    }]
 }

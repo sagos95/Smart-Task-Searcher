@@ -1,15 +1,18 @@
-import {
-  API_URL,
-  ACCESS_TOKEN,
-  OPENAI_KEY,
-  nash_failik
-} from './local-settings.js';
+const that = this;
 
-const SPACE_ID = "317748"; // Replace with actual space ID
+const SPACE_ID = "317748";       // Replace with actual space ID
 const OFFSET = 0;                // Adjust as needed
 const LIMIT = 50;                // Adjust as needed
 const PAGE_SIZE = 100;
 
+// init secrets
+(async () => {
+  const src = chrome.runtime.getURL("local-settings.js");
+  const contentMain = await import(src);
+  that.API_URL = contentMain.API_URL;
+  that.ACCESS_TOKEN = contentMain.ACCESS_TOKEN;
+  that.OPENAI_KEY = contentMain.OPENAI_KEY;
+})();
 
 // Создаем кнопку
 const button = document.createElement('button');
