@@ -1,11 +1,14 @@
+import {
+  API_URL,
+  ACCESS_TOKEN,
+  OPENAI_KEY,
+  nash_failik
+} from './local-settings.js';
+
 const SPACE_ID = "317748"; // Replace with actual space ID
 const OFFSET = 0;                // Adjust as needed
 const LIMIT = 50;                // Adjust as needed
 const PAGE_SIZE = 100;
-// const API_URL = `https://YOUR_COMPANY.kaiten.ru/api/latest/cards?space_id=${SPACE_ID}&offset=${OFFSET}&limit=${LIMIT}&archived=false`;
-const API_URL = `https://YOUR_COMPANY.kaiten.ru/api/latest/cards`;
-const ACCESS_TOKEN = "??"
-const OPENAI_KEY = "??"
 
 
 // Создаем кнопку
@@ -84,3 +87,60 @@ async function uploadFile(fileData) {
       console.error('Ошибка при выполнении запроса:', error);
     }
 }
+
+
+// for auto-pagination:
+// const fetchAllData = async () => {
+//     let allData = [];  // Array to store all results
+//     let offset = 0;    // Start offset
+//     let hasMoreData = true;
+
+//     while (hasMoreData) {
+//         try {
+//             // Construct URL with the current offset
+//             const url = `${API_URL}?space_id=${SPACE_ID}&offset=${offset}&limit=${PAGE_SIZE}&archived=false`;
+
+//             // Make the API call
+//             const response = await fetch(url, {
+//                 method: "GET",
+//                 headers: {
+//                     "Content-Type": "application/json",
+//                     "Authorization": `Bearer ${ACCESS_TOKEN}`
+//                 }
+//             });
+
+//             if (!response.ok) {
+//                 throw new Error(`HTTP error! status: ${response.status}`);
+//             }
+
+//             const data = await response.json();
+
+//             // Add the current batch to the overall data
+//             allData = allData.concat(data);
+
+//             // Check if we should fetch more
+//             ???
+//             if (data.length < PAGE_SIZE) {
+//                 hasMoreData = false;  // No more data to fetch
+//             } else {
+//                 offset += PAGE_SIZE; // Increment the offset
+//             }
+//         } catch (error) {
+//             console.error("Error fetching data:", error);
+//             break;
+//         }
+//     }
+
+//     return allData;  // Return the aggregated data
+// };
+
+
+
+// chrome.storage.local.set({ fetchedData: data }, () => {
+//     console.log("Данные сохранены в хранилище");
+// });
+
+// // Читаем данные из хранилища
+// chrome.storage.local.get("fetchedData", result => {
+//   console.log("Данные из хранилища:", result.fetchedData);
+// });
