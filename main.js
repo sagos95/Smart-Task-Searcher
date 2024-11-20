@@ -48,7 +48,14 @@ async function fetchKaitenCards() {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        return await response.json();
+        const rawJson = await response.json();
+
+        const extractedFieldsJson = rawJson.map(obj => ({
+          id: obj.id,
+          title: obj.title
+        }));
+
+        return extractedFieldsJson;
     } catch (error) {
         console.error("Error fetching Kaiten cards:", error);
         throw error
