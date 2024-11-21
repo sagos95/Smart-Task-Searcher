@@ -2,8 +2,8 @@ export const css =
 `
 <style>
     .openai-loader {
-      width: 48px;
-      height: 48px;
+      width: 1.5rem;
+      height: 1.5rem;
       border-radius: 50%;
       position: relative;
       animation: rotate 1s linear infinite
@@ -14,7 +14,7 @@ export const css =
       position: absolute;
       inset: 0px;
       border-radius: 50%;
-      border: 5px solid #FFF;
+      border: 0.25rem solid rgb(156, 39, 176);
       animation: prixClipFix 2s linear infinite ;
     }
 
