@@ -9,10 +9,6 @@ chrome.storage.local.get(['API_URL', 'ACCESS_TOKEN', 'OPENAI_KEY'], (result) => 
     that.API_URL = result.API_URL;
     that.ACCESS_TOKEN = result.ACCESS_TOKEN;
     that.OPENAI_KEY = result.OPENAI_KEY;
-    
-    if (!accessToken || !openAiKey) {
-        console.error('Access Token или OpenAI Key не установлены.');
-    }
 });
 
 // init secrets
