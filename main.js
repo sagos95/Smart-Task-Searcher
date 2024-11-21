@@ -5,50 +5,36 @@ const OFFSET = 0;                // Adjust as needed
 const LIMIT = 50;                // Adjust as needed
 const PAGE_SIZE = 100;
 
+// loaded from styles.js
+components = {
+  curtain: undefined,
+  popupSearchBar: undefined,
+  createElement: (parent, elementTemplate) => {
+    const el = document.createElement('template');
+    el.innerHTML = elementTemplate;
+    parent.appendChild(el.content);
+  }
+};
+
 // init secrets
 (async () => {
   const localSettings = await import(chrome.runtime.getURL("local-settings.js"));
   that.API_URL = localSettings.API_URL;
   that.ACCESS_TOKEN = localSettings.ACCESS_TOKEN;
   that.OPENAI_KEY = localSettings.OPENAI_KEY;
-  const css = (await import(chrome.runtime.getURL("styles.js"))).css;
+  
+  const styles = (await import(chrome.runtime.getURL("styles.js")));
   const stylesElement = document.createElement('template');
-  stylesElement.innerHTML = css;
-  console.log("child", stylesElement.content.firstChild)
-  console.log("stylesElement.innerHTML", stylesElement.innerHTML)
-  console.log("css", css)
+  stylesElement.innerHTML = styles.css;
   document.body.appendChild(stylesElement.content);
+
+  that.components.curtain = styles.curtain;
+  that.components.popupSearchBar = styles.popupSearchBar;
 })();
 
 // Создаем кнопку
 const topButton = document.createElement('button');
 
-// Создаем инпут
-const input = document.createElement('input');
-input.type = 'text';
-input.placeholder = 'Введите ваш запрос...';
-input.className = 'v4-MuiInputBase-root v4-MuiOutlinedInput-root v5-v5294 v4-MuiInputBase-fullWidth v4-MuiInputBase-formControl v4-MuiInputBase-adornedStart v4-MuiOutlinedInput-adornedStart v5-v5295 v4-MuiInputBase-marginDense v4-MuiOutlinedInput-marginDense'; // Класс для стилизации
-input.style.position = 'fixed';
-input.style.bottom = '20px';
-input.style.right = 'calc(20px + 120px)'; // Учитываем ширину кнопки (примерно 120px)
-input.style.zIndex = '10000';
-input.style.padding = '10px';
-input.style.border = '1px solid #ccc';
-input.style.borderRadius = '8px';
-input.style.boxShadow = '0px 4px 6px rgba(0, 0, 0, 0.1)';
-input.style.fontSize = '16px';
-
-// const bottomButtonsHolder = document.createElement('div');
-// bottomButtonsHolder.style.position = 'fixed';
-// bottomButtonsHolder.style.bottom = '20px';
-// bottomButtonsHolder.style.right = '20px';
-// bottomButtonsHolder.style.zIndex = '10000';
-
-// bottomButtonsHolder.appendChild(input);
-// bottomButtonsHolder.appendChild(button);
-// Добавляем инпут на страницу
-// document.body.appendChild(bottomButtonsHolder);
-document.body.appendChild(input);
 
 window.addEventListener("load", (event) => {
   // todo: retry
@@ -73,10 +59,13 @@ window.addEventListener("load", (event) => {
 
 // Добавляем обработчик клика
 topButton.addEventListener('click', async () => {
-  // todo: remove
-    const loaderDiv = document.createElement('div');
-    loaderDiv.className = 'openai-loader';
-    topButton.appendChild(loaderDiv);
+    components.createElement(document.body, components.curtain);
+    components.createElement(document.body, components.popupSearchBar);
+// todo: 
+    // const loaderDiv = document.createElement('div');
+    // loaderDiv.className = 'openai-loader';
+    // topButton.appendChild(loaderDiv);
+
     return;
 
     alert('Подождите, пока загрузятся данные');
