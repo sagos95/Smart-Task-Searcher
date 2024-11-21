@@ -12,7 +12,7 @@ chrome.storage.local.get(['API_URL', 'ACCESS_TOKEN', 'OPENAI_KEY'], (result) => 
 });
 
 // loaded from styles.js
-components = {
+const components = {
   curtain: undefined,
   popupSearchBar: undefined,
   createElement: (parent, elementTemplate) => {
@@ -24,11 +24,6 @@ components = {
 
 // init secrets
 (async () => {
-  const localSettings = await import(chrome.runtime.getURL("local-settings.js"));
-  that.API_URL = localSettings.API_URL;
-  that.ACCESS_TOKEN = localSettings.ACCESS_TOKEN;
-  that.OPENAI_KEY = localSettings.OPENAI_KEY;
-  
   const styles = (await import(chrome.runtime.getURL("styles.js")));
   const stylesElement = document.createElement('template');
   stylesElement.innerHTML = styles.css;
@@ -75,7 +70,7 @@ topButton.addEventListener('click', async () => {
     return;
 
     alert('Подождите, пока загрузятся данные');
-    const kaitenData = await fetchKaitenCards();
+    const kaitenData = await fetchAllData();
     console.log("Kaiten Length:", kaitenData.length);
     console.log("Kaiten Cards:", kaitenData);
 
@@ -263,49 +258,48 @@ async function uploadFile(fileData) {
 }
 
 // for auto-pagination:
-// const fetchAllData = async () => {
-//     let allData = [];  // Array to store all results
-//     let offset = 0;    // Start offset
-//     let hasMoreData = true;
+const fetchAllData = async () => {
+    let allData = [];  // Array to store all results
+    let offset = 0;    // Start offset
+    let hasMoreData = true;
 
-//     while (hasMoreData) {
-//         try {
-//             // Construct URL with the current offset
-//             const url = `${API_URL}?space_id=${SPACE_ID}&offset=${offset}&limit=${PAGE_SIZE}&archived=false`;
+    while (hasMoreData) {
+        try {
+            // Construct URL with the current offset
+            const url = `${API_URL}?space_id=${SPACE_ID}&offset=${offset}&limit=${PAGE_SIZE}&archived=false`;
 
-//             // Make the API call
-//             const response = await fetch(url, {
-//                 method: "GET",
-//                 headers: {
-//                     "Content-Type": "application/json",
-//                     "Authorization": `Bearer ${ACCESS_TOKEN}`
-//                 }
-//             });
+            // Make the API call
+            const response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${ACCESS_TOKEN}`
+                }
+            });
 
-//             if (!response.ok) {
-//                 throw new Error(`HTTP error! status: ${response.status}`);
-//             }
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
-//             const data = await response.json();
+            const data = await response.json();
 
-//             // Add the current batch to the overall data
-//             allData = allData.concat(data);
+            // Add the current batch to the overall data
+            allData = allData.concat(data);
 
-//             // Check if we should fetch more
-//             ???
-//             if (data.length < PAGE_SIZE) {
-//                 hasMoreData = false;  // No more data to fetch
-//             } else {
-//                 offset += PAGE_SIZE; // Increment the offset
-//             }
-//         } catch (error) {
-//             console.error("Error fetching data:", error);
-//             break;
-//         }
-//     }
+            // Check if we should fetch more
+            if (data.length < PAGE_SIZE) {
+                hasMoreData = false;  // No more data to fetch
+            } else {
+                offset += PAGE_SIZE; // Increment the offset
+            }
+        } catch (error) {
+            console.error("Error fetching data:", error);
+            break;
+        }
+    }
 
-//     return allData;  // Return the aggregated data
-// };
+    return allData;  // Return the aggregated data
+};
 
 
 
