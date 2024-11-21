@@ -5,6 +5,12 @@ const OFFSET = 0;                // Adjust as needed
 const LIMIT = 50;                // Adjust as needed
 const PAGE_SIZE = 100;
 
+chrome.storage.local.get(['API_URL', 'ACCESS_TOKEN', 'OPENAI_KEY'], (result) => {
+    that.API_URL = result.API_URL;
+    that.ACCESS_TOKEN = result.ACCESS_TOKEN;
+    that.OPENAI_KEY = result.OPENAI_KEY;
+});
+
 // loaded from styles.js
 components = {
   curtain: undefined,

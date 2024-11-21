@@ -1,9 +1,119 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Settings</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
 
-<html>
+    .popup {
+      width: 350px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
 
-<body style="min-width:800px;min-height:600px">
-  This is extension popup
+    .popup h2 {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .popup label {
+      display: block;
+      text-align: left;
+      margin-bottom: 5px;
+      font-size: 0.9rem;
+      color: #555;
+    }
+
+    .input-wrapper {
+      position: relative;
+      margin-bottom: 15px;
+    }
+
+    .popup input {
+      width: calc(100% - 20px);
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+
+    .checkmark {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
+      font-size: 1.2rem;
+      color: green;
+      display: none;
+    }
+
+    .popup button {
+      width: 100%;
+      padding: 10px;
+      background-color: #007BFF;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .popup button:hover {
+      background-color: #0056b3;
+    }
+
+    .success-message {
+      color: green;
+      font-size: 0.9rem;
+      margin-top: 15px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+<div class="popup">
+  <h2>API Настройки</h2>
+  <div class="input-wrapper">
+    <label for="access-token">Kaiten API URL</label>
+    <input type="text" id="api-url" placeholder="Kaiten API URL">
+    <span class="checkmark" id="api-url-checkmark">✔</span>
+  </div>
+  
+  <form id="api-settings-form">
+    <div class="input-wrapper">
+      <label for="access-token">Kaiten API Key</label>
+      <input type="text" id="access-token" placeholder="Kaiten API Key">
+      <span class="checkmark" id="access-token-checkmark">✔</span>
+    </div>
+
+    <div class="input-wrapper">
+      <label for="openai-key">OpenAI Key</label>
+      <input type="text" id="openai-key" placeholder="Введите OpenAI Key">
+      <span class="checkmark" id="openai-key-checkmark">✔</span>
+    </div>
+
+    <button type="submit">Сохранить</button>
+  </form>
+  <div class="success-message" id="success-message">Настройки успешно сохранены!</div>
+</div>
+
+<script src="popup.js"></script>
 </body>
-
 </html>
