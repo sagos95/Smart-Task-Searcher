@@ -91,6 +91,7 @@ const onSearchButtonClick = async () => {
     // console.log("fileId: ", fileId);
 
     // approach with direct asking chat gpt
+    const input = document.getElementById(components.searchBarId);
     const question = input.value.trim(); // Получаем значение из инпута  
     const gptResponse = await askChatGpt(kaitenData, question);
     console.log("Gpt response:", gptResponse);
