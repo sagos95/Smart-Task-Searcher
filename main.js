@@ -12,7 +12,7 @@ chrome.storage.local.get(['API_URL', 'ACCESS_TOKEN', 'OPENAI_KEY'], (result) => 
 });
 
 // loaded from styles.js
-const components = {
+that.components = {
   curtain: undefined,
   popupSearchBar: undefined, 
   searchBarId: undefined,
