@@ -294,10 +294,14 @@ const fetchAllData = async () => {
             }
 
             const data = await response.json();
-
+            const extractedFieldsJson = data.map(obj => ({
+                id: obj.id,
+                title: obj.title
+            }));
+            
             // Add the current batch to the overall data
-            allData = allData.concat(data);
-
+            allData = allData.concat(extractedFieldsJson);
+            
             // Check if we should fetch more
             if (data.length < PAGE_SIZE) {
                 hasMoreData = false;  // No more data to fetch
