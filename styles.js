@@ -12,7 +12,7 @@ export const css =
       content: "";
       box-sizing: border-box;
       position: absolute;
-      inset: 0px;
+      inset: 0;
       border-radius: 50%;
       border: 0.25rem solid rgb(156, 39, 176);
       animation: prixClipFix 2s linear infinite ;
@@ -32,7 +32,7 @@ export const css =
 </style>`;
 
 export const curtain = `
-<div class="" style="
+<div class="" id="search-curtain" style="
     position: fixed;
     top: 0;
     width: 100%;
@@ -45,13 +45,14 @@ export const curtain = `
 `;
 
 export const popupSearchBar = `
-<div class="" style="
+<div class="" id="popup-search-window" style="
+    display: flex;
     position: fixed;
     top: 20vh;
     width: 50%;
     background: #fff;
     left: 25%;
-    box-shadow: 0px 10px 19px -11px #000;
+    box-shadow: 0 10px 19px -11px #000;
     border-radius: 0.5rem;
     padding: 10px;
     min-width: 250px;
@@ -66,5 +67,10 @@ export const popupSearchBar = `
            border: 1px solid rgb(204, 204, 204);
            border-radius: 8px;box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px;
            font-size: 16px;">
+    <button id="popup-search-button" class="v5-v559 css-1hwqkh2">
+        Search
+    </button>
 </div>
 `
+
+export const searchBarId = "ask-ai-input";

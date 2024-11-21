@@ -12,14 +12,16 @@ chrome.storage.local.get(['API_URL', 'ACCESS_TOKEN', 'OPENAI_KEY'], (result) => 
 });
 
 // loaded from styles.js
-components = {
-  curtain: undefined,
-  popupSearchBar: undefined,
-  createElement: (parent, elementTemplate) => {
-    const el = document.createElement('template');
-    el.innerHTML = elementTemplate;
-    parent.appendChild(el.content);
-  }
+that.components = {
+    curtain: undefined,
+    popupSearchBar: undefined,
+    searchBarId: undefined,
+    createElement: (parent, elementTemplate) => {
+        const el = document.createElement('template');
+        el.innerHTML = elementTemplate;
+        parent.appendChild(el.content);
+        return el;
+    }
 };
 
 // init secrets
@@ -36,11 +38,11 @@ components = {
 
   that.components.curtain = styles.curtain;
   that.components.popupSearchBar = styles.popupSearchBar;
+  that.components.searchBarId = styles.searchBarId;
 })();
 
 // Создаем кнопку
 const topButton = document.createElement('button');
-
 
 window.addEventListener("load", (event) => {
   // todo: retry
@@ -63,18 +65,28 @@ window.addEventListener("load", (event) => {
   }, "2000");
 });
 
-// Добавляем обработчик клика
 topButton.addEventListener('click', async () => {
-    components.createElement(document.body, components.curtain);
-    components.createElement(document.body, components.popupSearchBar);
+    if (document.getElementById("popup-search-window"))
+        return;
+    
+    const curtain = components.createElement(document.body, components.curtain);
+    const window = components.createElement(document.body, components.popupSearchBar);
+    const searchButton = document.getElementById("popup-search-button");
+    searchButton.addEventListener("click", onSearchButtonClick);
+    curtain.addEventListener("click", () => {
+        curtain.remove();
+        window.remove();
+    });
+});
+
+const onSearchButtonClick = async () => {
+    alert('Подождите, пока загрузятся данные');
+   
 // todo: 
     // const loaderDiv = document.createElement('div');
     // loaderDiv.className = 'openai-loader';
     // topButton.appendChild(loaderDiv);
 
-    return;
-
-    alert('Подождите, пока загрузятся данные');
     const kaitenData = await fetchKaitenCards();
     console.log("Kaiten Length:", kaitenData.length);
     console.log("Kaiten Cards:", kaitenData);
@@ -113,7 +125,7 @@ topButton.addEventListener('click', async () => {
         errorItem.textContent = 'Ошибка обработки данных.';
         resultList.appendChild(errorItem);
     }
-});
+};
 
 // Добавляем кнопку на страницу
 document.body.appendChild(topButton);
