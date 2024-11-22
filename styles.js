@@ -66,6 +66,7 @@ export const popupSearchBar = `
            padding: 10px;
            border: 1px solid rgb(204, 204, 204);
            border-radius: 8px;box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px;
+           width: -webkit-fill-available;
            font-size: 16px;">
     <button id="popup-search-button" class="v5-v559 css-1hwqkh2">
         Search

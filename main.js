@@ -64,16 +64,18 @@ topButton.addEventListener('click', async () => {
     if (document.getElementById("popup-search-window"))
         return;
     
-    const curtain = components.createElement(document.body, components.curtain);
-    const window = components.createElement(document.body, components.popupSearchBar);
+    const curtain = components.createElement(document.body, that.components.curtain);
+    const window = components.createElement(document.body, that.components.popupSearchBar);
     const searchButton = document.getElementById("popup-search-button");
     searchButton.addEventListener("click", onSearchButtonClick);
-    curtain.addEventListener("click", () => {
-        curtain.remove();
-        window.remove();
-    });
+    curtain.addEventListener("click", onCurtainClick);
 });
 
+const onCurtainClick = async () => {
+    console.log("curtain.remove()");
+    curtain.remove();
+    window.remove();
+}
 const onSearchButtonClick = async () => {
     alert('Подождите, пока загрузятся данные');
    
@@ -101,7 +103,7 @@ const onSearchButtonClick = async () => {
 
     // Обработка ответа и отображение в списке
     try {
-      const parsedResponse = JSON.parse(gptResponse);
+      const parsedResponse = JSON.parse(gptResponse).cards;
 
       if (Array.isArray(parsedResponse) && parsedResponse.length > 0) {
           parsedResponse.forEach(card => {
@@ -159,27 +161,33 @@ async function askChatGpt(context, question) {
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: "Вот карточки: \n```" + JSON.stringify(context) + "```\n\nВопрос пользователя: " + question }
-    ]
-    // ,
-    // response_format: {
-    //   type: "json_schema",
-    //   json_schema: {
-    //     name: "task_response",
-    //     strict: true,
-    //     schema: {
-    //       type: "array",
-    //       items: {
-    //         type: "object",
-    //         properties: {
-    //           id: { type: "string", description: "Уникальный идентификатор задачи" },
-    //           title: { type: "string", description: "Название задачи" }
-    //         },
-    //         required: ["id", "title"],
-    //         additionalProperties: false
-    //       }
-    //     }
-    //   }
-    // }
+    ],
+    response_format: {
+      type: "json_schema",
+      json_schema: {
+        name: "task_card_response",
+        schema: {
+          type: "object",
+          properties: {
+            cards: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  id: { type: "string" },
+                  title: { type: "string" },
+                },
+                required: ["id", "title"],
+                additionalProperties: false,
+              },
+            },
+          },
+          required: ["cards"],
+          additionalProperties: false,
+        },
+        strict: true,
+      }
+    }
   };
 
   console.log("payload:", payload);
