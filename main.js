@@ -251,35 +251,35 @@ async function fetchKaitenCards() {
 
 async function uploadFile(fileData) {
 
-    // Convert data to JSONL format
-    const jsonlContent = fileData.map(entry => JSON.stringify(entry)).join('\n');
-        
-    // Create a Blob from the JSONL content
-    const file = new Blob([jsonlContent], { type: "application/jsonl" });
+  // Convert data to JSONL format
+  const jsonlContent = fileData.map(entry => JSON.stringify(entry)).join('\n');
+  console.log("JSONL Kaiten cards", jsonlContent)
+  // Create a Blob from the JSONL content
+  const file = new Blob([jsonlContent], { type: 'text/plain' });
 
-    const formData = new FormData();
-    formData.append("purpose", "assistants");
-    formData.append("file", file);
-  
-    try {
-      const response = await fetch('https://api.openai.com/v1/files', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENAI_KEY}`
-        },
-        body: formData
-      });
-  
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Файл успешно загружен:', data);
-        return data.id;
-      } else {
-        console.error('Ошибка загрузки файла:', response.status, response.statusText);
-      }
-    } catch (error) {
-      console.error('Ошибка при выполнении запроса:', error);
+  const formData = new FormData();
+  formData.append("purpose", "assistants");
+  formData.append("file", file, "kaiten_cards.txt");
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/files', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_KEY}`
+      },
+      body: formData
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Файл успешно загружен:', data);
+      return data.id;
+    } else {
+      console.error('Ошибка загрузки файла:', response.status, response.statusText);
     }
+  } catch (error) {
+    console.error('Ошибка при выполнении запроса:', error);
+  }
 }
 
 // for auto-pagination:
