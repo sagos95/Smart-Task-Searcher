@@ -2,8 +2,11 @@
     "manifest_version": 3,
     "name": "Tasks Searcher Extension",
     "version": "0.1",
-    "permissions": ["activeTab", "scripting", "storage"],
+    "permissions": ["tabs", "activeTab", "scripting", "storage"],
     "host_permissions": ["https://*.kaiten.ru/*"],
+    "background": {
+        "service_worker": "background.js"
+    },
     "action": {
         "default_popup": "popup.html"
     },

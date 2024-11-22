@@ -1,6 +1,6 @@
 const that = this;
 
-const SPACE_ID = "317748";       // Replace with actual space ID
+//const SPACE_ID = "317748";       // Replace with actual space ID
 const OFFSET = 0;                // Adjust as needed
 const LIMIT = 50;                // Adjust as needed
 const PAGE_SIZE = 100;
@@ -26,6 +26,10 @@ that.components = {
 
 // init secrets
 (async () => {
+
+  const tabUrl = await getCurrentTabUrl()
+  that.SPACE_ID = extractSpaceId(tabUrl)
+
   const styles = (await import(chrome.runtime.getURL("styles.js")));
   const stylesElement = document.createElement('template');
   stylesElement.innerHTML = styles.css;
@@ -287,7 +291,7 @@ const fetchAllData = async () => {
     while (hasMoreData) {
         try {
             // Construct URL with the current offset
-            const url = `${API_URL}?space_id=${SPACE_ID}&offset=${offset}&limit=${PAGE_SIZE}&archived=false`;
+            const url = `${API_URL}?space_id=${that.SPACE_ID}&offset=${offset}&limit=${PAGE_SIZE}&archived=false`;
 
             // Make the API call
             const response = await fetch(url, {
@@ -326,6 +330,22 @@ const fetchAllData = async () => {
     return allData;  // Return the aggregated data
 };
 
+async function getCurrentTabUrl(){
+  return new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage({ type: "GET_TAB_URL" }, (response) => {
+          if (chrome.runtime.lastError || response.error) {
+              reject(chrome.runtime.lastError || response.error);
+          } else {
+              resolve(response.url);
+          }
+      });
+  });
+};
+
+function extractSpaceId(url){
+  const match = url.match(/space\/(\d+)/);
+  return match ? match[1] : null;
+};
 
 
 // chrome.storage.local.set({ fetchedData: data }, () => {
