@@ -348,6 +348,8 @@ function extractSpaceId(url){
 };
 
 
+
+
 // chrome.storage.local.set({ fetchedData: data }, () => {
 //     console.log("Данные сохранены в хранилище");
 // });
@@ -356,3 +358,191 @@ function extractSpaceId(url){
 // chrome.storage.local.get("fetchedData", result => {
 //   console.log("Данные из хранилища:", result.fetchedData);
 // });
+
+async function createAssistant(apiKey, model, options = {}) {
+  const url = "https://api.openai.com/v1/assistants";
+
+  // Подготовка тела запроса
+  const payload = {
+    model, // Обязательное поле
+    ...options, // Дополнительные параметры
+  };
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log("Assistant created:", data);
+    return data; // Возвращаем объект помощника
+  } catch (error) {
+    console.error("Error creating assistant:", error);
+    throw error;
+  }
+}
+
+async function createThread(apiKey, options = {}) {
+  const url = "https://api.openai.com/v1/threads";
+
+  // Подготовка тела запроса
+  const payload = {
+    ...options, // Дополнительные параметры
+  };
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log("Thread created:", data);
+    return data; // Возвращаем объект ветки
+  } catch (error) {
+    console.error("Error creating thread:", error);
+    throw error;
+  }
+}
+
+async function createMessage(apiKey, threadId, role, content, options = {}) {
+  const url = `https://api.openai.com/v1/threads/${threadId}/messages`;
+
+  // Подготовка тела запроса
+  const payload = {
+    role, // Обязательное поле: роль отправителя
+    content, // Обязательное поле: содержание сообщения
+    ...options, // Дополнительные параметры
+  };
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log("Message created:", data);
+    return data; // Возвращаем объект сообщения
+  } catch (error) {
+    console.error("Error creating message:", error);
+    throw error;
+  }
+}
+
+async function createRun(apiKey, threadId, assistantId, options = {}) {
+  const url = `https://api.openai.com/v1/threads/${threadId}/runs`;
+
+  // Подготовка тела запроса
+  const payload = {
+    assistant_id: assistantId, // Обязательное поле: ID помощника
+    ...options, // Дополнительные параметры
+  };
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log("Run created:", data);
+    return data; // Возвращаем объект запуска
+  } catch (error) {
+    console.error("Error creating run:", error);
+    throw error;
+  }
+}
+
+async function createVectorStoreFile(apiKey, vectorStoreId, fileId, options = {}) {
+  const url = `https://api.openai.com/v1/vector_stores/${vectorStoreId}/files`;
+
+  // Подготовка тела запроса
+  const payload = {
+    file_id: fileId, // Обязательное поле: ID файла
+    ...options, // Дополнительные параметры
+  };
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log("Vector store file created:", data);
+    return data; // Возвращаем объект файла хранилища
+  } catch (error) {
+    console.error("Error creating vector store file:", error);
+    throw error;
+  }
+}
+
+async function listMessages(apiKey, threadId, queryParams = {}) {
+  // Формирование URL с query-параметрами
+  const url = new URL(`https://api.openai.com/v1/threads/${threadId}/messages`);
+  Object.keys(queryParams).forEach((key) =>
+    url.searchParams.append(key, queryParams[key])
+  );
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log("Messages retrieved:", data);
+    return data; // Возвращаем список сообщений
+  } catch (error) {
+    console.error("Error listing messages:", error);
+    throw error;
+  }
+}
