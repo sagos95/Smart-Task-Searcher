@@ -359,7 +359,7 @@ function extractSpaceId(url){
 //   console.log("Данные из хранилища:", result.fetchedData);
 // });
 
-async function createAssistant(apiKey, model, options = {}) {
+async function createAssistant(model, options = {}) {
   const url = "https://api.openai.com/v1/assistants";
 
   // Подготовка тела запроса
@@ -373,7 +373,7 @@ async function createAssistant(apiKey, model, options = {}) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
+        "Authorization": `Bearer ${OPENAI_KEY}`,
       },
       body: JSON.stringify(payload),
     });
@@ -391,7 +391,7 @@ async function createAssistant(apiKey, model, options = {}) {
   }
 }
 
-async function createThread(apiKey, options = {}) {
+async function createThread(options = {}) {
   const url = "https://api.openai.com/v1/threads";
 
   // Подготовка тела запроса
@@ -404,7 +404,7 @@ async function createThread(apiKey, options = {}) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
+        "Authorization": `Bearer ${OPENAI_KEY}`,
       },
       body: JSON.stringify(payload),
     });
@@ -422,7 +422,7 @@ async function createThread(apiKey, options = {}) {
   }
 }
 
-async function createMessage(apiKey, threadId, role, content, options = {}) {
+async function createMessage(threadId, role, content, options = {}) {
   const url = `https://api.openai.com/v1/threads/${threadId}/messages`;
 
   // Подготовка тела запроса
@@ -437,7 +437,7 @@ async function createMessage(apiKey, threadId, role, content, options = {}) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
+        "Authorization": `Bearer ${OPENAI_KEY}`,
       },
       body: JSON.stringify(payload),
     });
@@ -455,7 +455,7 @@ async function createMessage(apiKey, threadId, role, content, options = {}) {
   }
 }
 
-async function createRun(apiKey, threadId, assistantId, options = {}) {
+async function createRun(threadId, assistantId, options = {}) {
   const url = `https://api.openai.com/v1/threads/${threadId}/runs`;
 
   // Подготовка тела запроса
@@ -469,7 +469,7 @@ async function createRun(apiKey, threadId, assistantId, options = {}) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
+        "Authorization": `Bearer ${OPENAI_KEY}`,
       },
       body: JSON.stringify(payload),
     });
@@ -487,7 +487,7 @@ async function createRun(apiKey, threadId, assistantId, options = {}) {
   }
 }
 
-async function createVectorStoreFile(apiKey, vectorStoreId, fileId, options = {}) {
+async function createVectorStoreFile(vectorStoreId, fileId, options = {}) {
   const url = `https://api.openai.com/v1/vector_stores/${vectorStoreId}/files`;
 
   // Подготовка тела запроса
@@ -501,7 +501,7 @@ async function createVectorStoreFile(apiKey, vectorStoreId, fileId, options = {}
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
+        "Authorization": `Bearer ${OPENAI_KEY}`,
       },
       body: JSON.stringify(payload),
     });
@@ -519,7 +519,7 @@ async function createVectorStoreFile(apiKey, vectorStoreId, fileId, options = {}
   }
 }
 
-async function listMessages(apiKey, threadId, queryParams = {}) {
+async function listMessages(threadId, queryParams = {}) {
   // Формирование URL с query-параметрами
   const url = new URL(`https://api.openai.com/v1/threads/${threadId}/messages`);
   Object.keys(queryParams).forEach((key) =>
@@ -530,7 +530,7 @@ async function listMessages(apiKey, threadId, queryParams = {}) {
     const response = await fetch(url.toString(), {
       method: "GET",
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
+        "Authorization": `Bearer ${OPENAI_KEY}`,
       },
     });
 
