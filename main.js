@@ -80,53 +80,31 @@ const onCurtainClick = async () => {
     curtain.remove();
     window.remove();
 }
+
 const onSearchButtonClick = async () => {
-    alert('Подождите, пока загрузятся данные');
-   
-// todo: 
-    // const loaderDiv = document.createElement('div');
-    // loaderDiv.className = 'openai-loader';
-    // topButton.appendChild(loaderDiv);
-    
-    const kaitenData = await fetchAllData();
-    console.log("Kaiten Length:", kaitenData.length);
-    console.log("Kaiten Cards:", kaitenData);
+  const input = document.getElementById(that.components.searchBarId);
+  const question = input.value.trim();
+  if (!question) {
+    alert("Введите вопрос!");
+    return;
+  }
 
-    // approach with using files and vector search
-    // const fileId = await uploadFile(kaitenData);
-    // console.log("fileId: ", fileId);
+  alert("Обрабатываем запрос, подождите...");
+  try {
+    const messages = await processKaitenData(question);
+    console.log("Final messages:", messages);
 
-    // approach with direct asking chat gpt
-    const input = document.getElementById(components.searchBarId);
-    const question = input.value.trim(); // Получаем значение из инпута  
-    const gptResponse = await askChatGpt(kaitenData, question);
-    console.log("Gpt response:", gptResponse);
-  
-    // Очистка списка перед добавлением нового результата
-    resultList.innerHTML = '';
-
-    // Обработка ответа и отображение в списке
-    try {
-      const parsedResponse = JSON.parse(gptResponse).cards;
-
-      if (Array.isArray(parsedResponse) && parsedResponse.length > 0) {
-          parsedResponse.forEach(card => {
-              const listItem = document.createElement('li');
-              listItem.textContent = `ID: ${card.id}, Title: ${card.title}`;
-              listItem.style.marginBottom = '5px';
-              resultList.appendChild(listItem);
-          });
-      } else {
-          const noResults = document.createElement('li');
-          noResults.textContent = 'Результатов не найдено.';
-          resultList.appendChild(noResults);
-      }
-    } catch (error) {
-        console.error('Ошибка при обработке ответа GPT:', error);
-        const errorItem = document.createElement('li');
-        errorItem.textContent = 'Ошибка обработки данных.';
-        resultList.appendChild(errorItem);
-    }
+    // Отображение сообщений
+    resultList.innerHTML = ""; // Очистка списка
+    messages.data.forEach((msg) => {
+      const listItem = document.createElement("li");
+      listItem.textContent = `Role: ${msg.role}, Content: ${msg.content}`;
+      resultList.appendChild(listItem);
+    });
+  } catch (error) {
+    console.error("Ошибка обработки:", error);
+    alert("Произошла ошибка при обработке данных.");
+  }
 };
 
 // Добавляем кнопку на страницу
@@ -374,6 +352,7 @@ async function createAssistant(model, options = {}) {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${OPENAI_KEY}`,
+        "OpenAI-Beta": "assistants=v2",
       },
       body: JSON.stringify(payload),
     });
@@ -405,6 +384,7 @@ async function createThread(options = {}) {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${OPENAI_KEY}`,
+        "OpenAI-Beta": "assistants=v2",
       },
       body: JSON.stringify(payload),
     });
@@ -438,6 +418,7 @@ async function createMessage(threadId, role, content, options = {}) {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${OPENAI_KEY}`,
+        "OpenAI-Beta": "assistants=v2",
       },
       body: JSON.stringify(payload),
     });
@@ -470,6 +451,7 @@ async function createRun(threadId, assistantId, options = {}) {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${OPENAI_KEY}`,
+        "OpenAI-Beta": "assistants=v2",
       },
       body: JSON.stringify(payload),
     });
@@ -502,6 +484,7 @@ async function createVectorStoreFile(vectorStoreId, fileId, options = {}) {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${OPENAI_KEY}`,
+        "OpenAI-Beta": "assistants=v2",
       },
       body: JSON.stringify(payload),
     });
@@ -531,6 +514,7 @@ async function listMessages(threadId, queryParams = {}) {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${OPENAI_KEY}`,
+        "OpenAI-Beta": "assistants=v2",
       },
     });
 
@@ -543,6 +527,125 @@ async function listMessages(threadId, queryParams = {}) {
     return data; // Возвращаем список сообщений
   } catch (error) {
     console.error("Error listing messages:", error);
+    throw error;
+  }
+}
+
+async function createVectorStore(apiKey, options = {}) {
+  const url = "https://api.openai.com/v1/vector_stores";
+
+  const payload = {
+    ...options, // Передаем параметры запроса
+  };
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+        "OpenAI-Beta": "assistants=v2", // Добавляем заголовок для бета-версии API
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log("Vector store created:", data);
+    return data; // Возвращаем объект векторного хранилища
+  } catch (error) {
+    console.error("Error creating vector store:", error);
+    throw error;
+  }
+}
+
+async function processKaitenData(question) {
+  try {
+    // Шаг 1: Выгрузка карточек из Kaiten
+    console.log("Fetching Kaiten cards...");
+    const kaitenData = await fetchAllData();
+    console.log("Kaiten cards fetched:", kaitenData);
+
+    // Шаг 2: Загрузка файла в OpenAI
+    console.log("Uploading Kaiten cards as a file...");
+    const fileId = await uploadFile(kaitenData);
+    console.log("File uploaded with ID:", fileId);
+
+    // Шаг 3: Создание векторного хранилища
+    console.log("Creating vector store...");
+    const vectorStore = await createVectorStore(OPENAI_KEY, {
+      file_ids: [fileId],
+      name: "Kaiten Vector Store",
+      chunking_strategy: {
+        type: "auto",
+      },
+      metadata: {
+        source: "Kaiten",
+        purpose: "Task card search",
+      },
+    });
+    const vectorStoreId = vectorStore.id;
+    console.log("Vector store created with ID:", vectorStoreId);
+
+    // Шаг 4: Создание ассистента
+    console.log("Creating assistant...");
+    const assistant = await createAssistant("gpt-4o", {
+      name: "Kaiten Assistant",
+      description: "Assistant for searching Kaiten task cards.",
+      instructions: `Ты помощник, который находит нужные данные на основе предоставленных карточкек из доски с задачами.
+      Пользователь описывает тебе искомую задачу. Найди и выдай список id и title карточек которые лучше всего отвечают искомому запросу.
+      Результат должен быть в JSON формате вида [{"id": "...", "title": "..."}], или пустой массив если нужных карточек не нашлось.
+      Не объясняй результат, дай сразу JSON данные. Не добавляй слово json в начале ответа`,
+      tools: [
+        {
+          "type": "file_search"
+        }
+      ],
+      tool_resources: {
+        file_search: { vector_store_ids: [vectorStoreId] },
+      },
+    });
+    const assistantId = assistant.id;
+    console.log("Assistant created with ID:", assistantId);
+
+    // Шаг 5: Создание ветки
+    console.log("Creating thread...");
+    const thread = await createThread({
+      messages: [{ role: "user", content: question }],
+      tool_resources: { file_search: { vector_store_ids: [vectorStoreId] } },
+    });
+    const threadId = thread.id;
+    console.log("Thread created with ID:", threadId);
+
+    // Шаг 6: Создание сообщения
+    console.log("Adding user message to thread...");
+    const message = await createMessage(threadId, "user", question);
+    console.log("Message created:", message);
+
+    // Шаг 7: Создание запуска
+    console.log("Creating run for the thread...");
+    const run = await createRun(threadId, assistantId, {
+      temperature: 0.7,
+      top_p: 0.9,
+      stream: false,
+      max_prompt_tokens: 1000,
+      max_completion_tokens: 500,
+    });
+    console.log("Run created:", run);
+
+    // Шаг 8: Получение списка сообщений
+    console.log("Fetching messages from thread...");
+    const messages = await listMessages(threadId, { limit: 50 });
+    console.log("Messages retrieved:", messages);
+
+    // Возвращаем список сообщений
+    return messages;
+
+  } catch (error) {
+    console.error("Error during process:", error);
     throw error;
   }
 }
