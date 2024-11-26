@@ -42,7 +42,7 @@ that.components = {
 // Создаем кнопку
 const topButton = document.createElement('button');
 
-window.addEventListener("load", (event) => {
+window.addEventListener("load", () => {
   // todo: retry
   setTimeout(() => {
     topButton.className = 'v5-v559 css-1hwqkh2';
@@ -356,40 +356,6 @@ async function createRun(threadId, assistantId, options = {}) {
     throw error;
   }
 }
-
-async function createVectorStoreFile(vectorStoreId, fileId, options = {}) {
-  const url = `https://api.openai.com/v1/vector_stores/${vectorStoreId}/files`;
-
-  // Подготовка тела запроса
-  const payload = {
-    file_id: fileId, // Обязательное поле: ID файла
-    ...options, // Дополнительные параметры
-  };
-
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${OPENAI_KEY}`,
-        "OpenAI-Beta": "assistants=v2",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    console.log("Vector store file created:", data);
-    return data; // Возвращаем объект файла хранилища
-  } catch (error) {
-    console.error("Error creating vector store file:", error);
-    throw error;
-  }
-}
-
 async function listMessages(threadId, queryParams = {}) {
   // Формирование URL с query-параметрами
   const url = new URL(`https://api.openai.com/v1/threads/${threadId}/messages`);
