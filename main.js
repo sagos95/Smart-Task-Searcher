@@ -1,8 +1,7 @@
+// noinspection ExceptionCaughtLocallyJS
+
 const that = this;
 
-//const SPACE_ID = "317748";       // Replace with actual space ID
-const OFFSET = 0;                // Adjust as needed
-const LIMIT = 50;                // Adjust as needed
 const PAGE_SIZE = 100;
 
 chrome.storage.local.get(['API_URL', 'ACCESS_TOKEN', 'OPENAI_KEY'], (result) => {
@@ -128,105 +127,6 @@ resultList.style.fontSize = '14px';
 // Добавляем список на страницу
 document.body.appendChild(resultList);
 
-
-async function askChatGpt(context, question) {
-  const systemPrompt =
-    `
-      Ты помощник, который находит нужные данные на основе предоставленных карточкек из доски с задачами.
-      Пользователь описывает тебе искомую задачу. Найди и выдай список id и title карточек которые лучше всего отвечают искомому запросу.
-      Результат должен быть в JSON формате вида [{"id": "...", "title": "..."}], или пустой массив если нужных карточек не нашлось.
-      Не объясняй результат, дай сразу JSON данные. Не добавляй слово json в начале ответа
-    `;
-
-  const payload = {
-    model: "gpt-4o",
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: "Вот карточки: \n```" + JSON.stringify(context) + "```\n\nВопрос пользователя: " + question }
-    ],
-    response_format: {
-      type: "json_schema",
-      json_schema: {
-        name: "task_card_response",
-        schema: {
-          type: "object",
-          properties: {
-            cards: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  id: { type: "string" },
-                  title: { type: "string" },
-                },
-                required: ["id", "title"],
-                additionalProperties: false,
-              },
-            },
-          },
-          required: ["cards"],
-          additionalProperties: false,
-        },
-        strict: true,
-      }
-    }
-  };
-
-  console.log("payload:", payload);
-
-  try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${OPENAI_KEY}`
-          },
-          body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) {
-          console("openai response:", response.body)
-          throw new Error(`Ошибка API OpenAI: ${response.status} - ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const gptAnswer = data.choices[0].message.content;
-      return gptAnswer;
-
-  } catch (error) {
-      console.error("Ошибка при запросе к OpenAI API: ", error);
-      throw error;
-  }
-}
-
-async function fetchKaitenCards() {
-    try {
-        const response = await fetch(API_URL, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${ACCESS_TOKEN}`
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const rawJson = await response.json();
-
-        const extractedFieldsJson = rawJson.map(obj => ({
-          id: obj.id,
-          title: obj.title
-        }));
-
-        return extractedFieldsJson;
-    } catch (error) {
-        console.error("Error fetching Kaiten cards:", error);
-        throw error
-    }
-}
-
 async function uploadFile(fileData) {
 
   // Convert data to JSONL format
@@ -318,24 +218,12 @@ async function getCurrentTabUrl(){
           }
       });
   });
-};
+}
 
 function extractSpaceId(url){
   const match = url.match(/space\/(\d+)/);
   return match ? match[1] : null;
-};
-
-
-
-
-// chrome.storage.local.set({ fetchedData: data }, () => {
-//     console.log("Данные сохранены в хранилище");
-// });
-
-// // Читаем данные из хранилища
-// chrome.storage.local.get("fetchedData", result => {
-//   console.log("Данные из хранилища:", result.fetchedData);
-// });
+}
 
 async function createAssistant(model, options = {}) {
   const url = "https://api.openai.com/v1/assistants";
@@ -595,7 +483,7 @@ async function processKaitenData(question) {
     const assistant = await createAssistant("gpt-4o", {
       name: "Kaiten Assistant",
       description: "Assistant for searching Kaiten task cards.",
-      instructions: `Ты помощник, который находит нужные данные на основе предоставленных карточкек из доски с задачами.
+      instructions: `Ты помощник, который находит нужные данные на основе предоставленных карточек из доски с задачами.
       Пользователь описывает тебе искомую задачу. Найди и выдай список id и title карточек которые лучше всего отвечают искомому запросу.
       Результат должен быть в JSON формате вида [{"id": "...", "title": "..."}], или пустой массив если нужных карточек не нашлось.
       Не объясняй результат, дай сразу JSON данные. Не добавляй слово json в начале ответа`,
