@@ -37,6 +37,9 @@ that.components = {
   that.components.curtain = styles.curtain;
   that.components.popupSearchBar = styles.popupSearchBar;
   that.components.searchBarId = styles.searchBarId;
+
+  const openaiRunnerAwaiter = await import(chrome.runtime.getURL("openai-runner-awaiter.js"));
+  that.waitForRunCompletion = openaiRunnerAwaiter.waitForRunCompletion;
 })();
 
 // Создаем кнопку
@@ -96,9 +99,14 @@ const onSearchButtonClick = async () => {
     // Отображение сообщений
     resultList.innerHTML = ""; // Очистка списка
     messages.data.forEach((msg) => {
-      const listItem = document.createElement("li");
-      listItem.textContent = `Role: ${msg.role}, Content: ${msg.content}`;
-      resultList.appendChild(listItem);
+      try {
+        const listItem = document.createElement("li");
+        listItem.textContent = `Role: ${msg.role}, Content: ${msg.content[0].text.value}`;
+        resultList.appendChild(listItem);
+      } catch (error) {
+        console.error("Ошибка создания элемента ответа:", error);
+        alert("Произошла ошибка при обработке данных.");
+      }
     });
   } catch (error) {
     console.error("Ошибка обработки:", error);
@@ -488,8 +496,10 @@ async function processKaitenData(question) {
       max_prompt_tokens: 1000,
       max_completion_tokens: 500,
     });
-    console.log("Run created:", run);
 
+    const ignoredStatuses = ["queued", "in_progress"];
+    await waitForRunCompletion(threadId, run.id, ignoredStatuses);
+    
     // Шаг 8: Получение списка сообщений
     console.log("Fetching messages from thread...");
     const messages = await listMessages(threadId, { limit: 50 });

@@ -18,6 +18,9 @@
     ],
     "web_accessible_resources": [{
         "matches": ["https://*.kaiten.ru/*"],
-        "resources": ["local-settings.js", "styles.js"]
+        "resources": [
+            "local-settings.js",
+            "styles.js",
+            "openai-runner-awaiter.js"]
     }]
 }
