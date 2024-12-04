@@ -96,10 +96,10 @@ const createSearchModal = () => {
     modal.id = 'custom-search-modal';
     modal.style.display = 'none';
     modal.style.position = 'fixed';
-    modal.style.top = '50%';
+    modal.style.top = '20%';
     modal.style.left = '50%';
     modal.style.transform = 'translate(-50%, -50%)';
-    modal.style.width = '400px';
+    modal.style.width = '638px';
     modal.style.backgroundColor = 'white';
     modal.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
     modal.style.borderRadius = '10px';
@@ -110,19 +110,18 @@ const createSearchModal = () => {
     <div style="display: flex; flex-direction: column; gap: 10px;">
       <!-- Заголовок и кнопка закрытия -->
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div style="font-size: 18px; font-weight: bold;">AI Search</div>
+        <div style="font-size: 18px; font-weight: bold;">AI SEARCH</div>
         <button id="custom-search-close" style="background: none; border: none; font-size: 18px; cursor: pointer;">&times;</button>
       </div>
 
       <!-- Поле ввода -->
       <div style="display: flex; gap: 10px;">
-        <input id="custom-search-input" type="text" placeholder="Введите запрос..." style="flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px;">
+        <input id="custom-search-input" type="text" placeholder="Опишите своими словами, какую карточку хотите найти..." style="flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px;">
         <button id="custom-search-button" style="padding: 8px 12px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">Искать</button>
       </div>
 
       <!-- Лоадер -->
-      <div id="custom-search-loader" style="display: none; text-align: center;">
-        <div class="loader" style="border: 4px solid #f3f3f3; border-top: 4px solid #007bff; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: auto;"></div>
+      <div class="openai-loader" id="custom-search-loader" style="display: none; text-align: center;">
       </div>
 
       <!-- Результат -->
@@ -164,7 +163,7 @@ document.getElementById('custom-search-button').addEventListener('click', async 
         const searchResults = await executeSearch(question, kaitenData, SPACE_ID);
 
         // Показать результат
-        result.innerHTML = `<pre>${JSON.stringify(searchResults, null, 2)}</pre>`;
+        result.innerHTML = `<pre>${searchResults}</pre>`;
         result.style.display = 'block';
     } catch (error) {
         result.innerHTML = `<span style="color: red;">Ошибка: ${error.message}</span>`;
