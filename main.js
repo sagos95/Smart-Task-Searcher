@@ -99,7 +99,7 @@ const onSearchButtonClick = async () => {
   alert("Обрабатываем запрос, подождите...");
 
   const kaitenData = await fetchKaitenAllData();
-  await executeSearch(question, kaitenData);
+  await executeSearch(question, kaitenData, SPACE_ID);
   
   return;
   // todo: assistants code:

@@ -9,7 +9,7 @@ chrome.storage.local.get(['API_URL', 'ACCESS_TOKEN', 'OPENAI_KEY'], (result) => 
     that.OPENAI_KEY = result.OPENAI_KEY;
 });
 
-export async function executeSearch(question, dataToSearch) {
+export async function executeSearch(question, dataToSearch, spaceId) {
     const queryEmbedding = await getEmbeddings([question]);
     
     // todo: метод для конвертации карточки с названием и дескрипшном в одну строку
@@ -25,15 +25,46 @@ export async function executeSearch(question, dataToSearch) {
     const promptAugmentation = nearestEmbeddings.reduce((sum, embedding) => {
         const card = dataToSearch[embedding.vector.index];
         return card 
-            ? sum + `"${card.title}": ${card.description}\n`
+            ? sum + `- Card Id: ${card.id}; Card title: "${card.title}"; Description: ${card.description}\n\n\n`
             : sum;
     }, '');
     
-    // todo: скормить сюда nearestEmbeddings и попросить выдать готовые ссылки
-    // const response = await getCompletion([
-    //     {role: "user",content: "Hello! Respond something so I can understand that you are working"},
-    // ]);
+    const response = await getCompletion([
+        {role: "system", content: getSearchPrompt(question, promptAugmentation, spaceId)}
+    ]);
+    console.log("Final response:", response);
 }
+
+
+
+
+// ================================= Chat GPT logic
+function getSearchPrompt(userQuery, augmentedContext, spaceId) {
+    const urlForCards = `https://dodopizza.kaiten.ru/space/${spaceId}/card`;
+    const prompt =
+        `Ты помощник, который находит нужные данные на основе предоставленных данных о карточках из доски с задачами.
+        Запрос пользователя: "${userQuery}".
+        Поиск по базе данных выдал следующие результаты: 
+        ${augmentedContext}
+        
+        - Среди данного списка найди и выдай список id и title карточек, которые лучше всего отвечают искомому запросу, 
+        и оформи итоговый ответ с указанием ссылок на карточки в следующем виде md разметки (т.е. сделай сам title
+        карточек кликабельными ссылками):
+        "
+        [TITLE_КАРТОЧКИ_1](${urlForCards}/ID_КАРТОЧКИ_1)
+        [TITLE_КАРТОЧКИ_2](${urlForCards}/ID_КАРТОЧКИ_2)
+        ...
+        ".
+        - При этом не обязательно выдавать сухой список ссылок, и если это будет необходимо для понимания, можно дать
+        комментарии и пояснения для пользователя.
+        - Если среди приведенных данных нет карточек, которые удовлетворяют запросу пользователя, так и сообщи, что
+        карточек не найдено.
+        `;
+    return prompt;
+}
+
+
+
 
 
 // ================================= Semantic search
