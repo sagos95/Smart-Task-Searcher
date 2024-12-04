@@ -23,13 +23,14 @@ that.components = {
   }
 };
 
-// init secrets
+// imports
 (async () => {
-
+  const importAsync = (fileName) => import(chrome.runtime.getURL(fileName));
+  
   const tabUrl = await getCurrentTabUrl()
   that.SPACE_ID = extractSpaceId(tabUrl)
 
-  const styles = (await import(chrome.runtime.getURL("styles.js")));
+  const styles = await importAsync("styles.js");
   const stylesElement = document.createElement('template');
   stylesElement.innerHTML = styles.css;
   document.body.appendChild(stylesElement.content);
@@ -38,8 +39,12 @@ that.components = {
   that.components.popupSearchBar = styles.popupSearchBar;
   that.components.searchBarId = styles.searchBarId;
 
-  const openaiRunnerAwaiter = await import(chrome.runtime.getURL("openai-runner-awaiter.js"));
+  const openaiRunnerAwaiter = await importAsync("openai-runner-awaiter.js");
   that.waitForRunCompletion = openaiRunnerAwaiter.waitForRunCompletion;
+
+  const openaiCompletions = await importAsync("openai-completions.js");
+  that.testCompletion = openaiCompletions.testCompletion;
+  that.executeSearch = openaiCompletions.executeSearch;
 })();
 
 // Создаем кнопку
@@ -92,26 +97,32 @@ const onSearchButtonClick = async () => {
   }
 
   alert("Обрабатываем запрос, подождите...");
-  try {
-    const messages = await processKaitenData(question);
-    console.log("Final messages:", messages);
 
-    // Отображение сообщений
-    resultList.innerHTML = ""; // Очистка списка
-    messages.data.forEach((msg) => {
-      try {
-        const listItem = document.createElement("li");
-        listItem.textContent = `Role: ${msg.role}, Content: ${msg.content[0].text.value}`;
-        resultList.appendChild(listItem);
-      } catch (error) {
-        console.error("Ошибка создания элемента ответа:", error);
-        alert("Произошла ошибка при обработке данных.");
-      }
-    });
-  } catch (error) {
-    console.error("Ошибка обработки:", error);
-    alert("Произошла ошибка при обработке данных.");
-  }
+  const kaitenData = await fetchKaitenAllData();
+  await executeSearch(question, kaitenData);
+  
+  return;
+  // todo: assistants code:
+  // try {
+  //   const messages = await processKaitenData(question);
+  //   console.log("Final messages:", messages);
+  //
+  //   // Отображение сообщений
+  //   resultList.innerHTML = ""; // Очистка списка
+  //   messages.data.forEach((msg) => {
+  //     try {
+  //       const listItem = document.createElement("li");
+  //       listItem.textContent = `Role: ${msg.role}, Content: ${msg.content[0].text.value}`;
+  //       resultList.appendChild(listItem);
+  //     } catch (error) {
+  //       console.error("Ошибка создания элемента ответа:", error);
+  //       alert("Произошла ошибка при обработке данных.");
+  //     }
+  //   });
+  // } catch (error) {
+  //   console.error("Ошибка обработки:", error);
+  //   alert("Произошла ошибка при обработке данных.");
+  // }
 };
 
 // Добавляем кнопку на страницу
@@ -169,7 +180,8 @@ async function uploadFile(fileData) {
 }
 
 // for auto-pagination:
-const fetchAllData = async () => {
+const fetchKaitenAllData = async () => {
+    console.log("Fetching Kaiten cards...");
     let allData = [];  // Array to store all results
     let offset = 0;    // Start offset
     let hasMoreData = true;
@@ -213,6 +225,7 @@ const fetchAllData = async () => {
         }
     }
 
+    console.log("Kaiten cards fetched:", allData);
     return allData;  // Return the aggregated data
 };
 
@@ -427,9 +440,7 @@ async function createVectorStore(apiKey, options = {}) {
 async function processKaitenData(question) {
   try {
     // Шаг 1: Выгрузка карточек из Kaiten
-    console.log("Fetching Kaiten cards...");
-    const kaitenData = await fetchAllData();
-    console.log("Kaiten cards fetched:", kaitenData);
+    const kaitenData = await fetchKaitenAllData();
 
     // Шаг 2: Загрузка файла в OpenAI
     console.log("Uploading Kaiten cards as a file...");
@@ -442,18 +453,29 @@ async function processKaitenData(question) {
       file_ids: [fileId],
       name: "Kaiten Vector Store",
       chunking_strategy: {
-        type: "auto",
+        // type: "auto",
+        type: "static",
+        static: {
+          max_chunk_size_tokens: 100,
+          chunk_overlap_tokens: 50
+        }
       },
       metadata: {
         source: "Kaiten",
         purpose: "Task card search",
       },
+      expires_after: {
+        anchor: "last_active_at",
+        days: 1
+      }
     });
+    // todo: где-то в доках майков рекомендовалось вручную пополлить и дождаться гарантии того что вектор стор создался
     const vectorStoreId = vectorStore.id;
     console.log("Vector store created with ID:", vectorStoreId);
 
     // Шаг 4: Создание ассистента
     console.log("Creating assistant...");
+    // todo: иногда чуваки прям в промпт пишут "при поиске по файлам юзай не более 5 топ результатов"
     const assistant = await createAssistant("gpt-4o", {
       name: "Kaiten Assistant",
       description: "Assistant for searching Kaiten task cards.",
@@ -463,12 +485,17 @@ async function processKaitenData(question) {
       Не объясняй результат, дай сразу JSON данные. Не добавляй слово json в начале ответа`,
       tools: [
         {
-          "type": "file_search"
+          type: "file_search",
+          file_search: 
+          {
+            max_num_results: 5,
+            // ranking_options: { score_threshold: 0.5 }
+          }
         }
       ],
       tool_resources: {
-        file_search: { vector_store_ids: [vectorStoreId] },
-      },
+        file_search: { vector_store_ids: [vectorStoreId] }
+      }
     });
     const assistantId = assistant.id;
     console.log("Assistant created with ID:", assistantId);
@@ -481,11 +508,11 @@ async function processKaitenData(question) {
     });
     const threadId = thread.id;
     console.log("Thread created with ID:", threadId);
-
+    
+    // todo: не нужно, уже создано сразу в thread
     // Шаг 6: Создание сообщения
-    console.log("Adding user message to thread...");
-    const message = await createMessage(threadId, "user", question);
-    console.log("Message created:", message);
+    // console.log("Adding user message to thread...");
+    // await createMessage(threadId, "user", question);
 
     // Шаг 7: Создание запуска
     console.log("Creating run for the thread...");
@@ -493,8 +520,21 @@ async function processKaitenData(question) {
       temperature: 0.7,
       top_p: 0.9,
       stream: false,
-      max_prompt_tokens: 1000,
-      max_completion_tokens: 500,
+      max_prompt_tokens: 10000,
+      max_completion_tokens: 10000,
+      // truncation_strategy: {
+      //  
+      // }
+      tools: [
+        {
+          type: "file_search",
+          file_search: 
+          {
+            max_num_results: 5,
+            // ranking_options: { score_threshold: 0.5 }
+          }
+        }
+      ]
     });
 
     const ignoredStatuses = ["queued", "in_progress"];

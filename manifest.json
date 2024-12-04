@@ -21,6 +21,7 @@
         "resources": [
             "local-settings.js",
             "styles.js",
-            "openai-runner-awaiter.js"]
+            "openai-runner-awaiter.js",
+            "openai-completions.js"]
     }]
 }

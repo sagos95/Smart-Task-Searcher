@@ -1,8 +1,4 @@
 
-export async function test() {
-    alert("test")
-}
-
 export async function waitForRunCompletion(threadId, runId, ignoredStatuses = [], timeoutMs = 60000, intervalMs = 1000) {
     const startTime = Date.now();
     const url = `https://api.openai.com/v1/threads/${threadId}/runs/${runId}`;
