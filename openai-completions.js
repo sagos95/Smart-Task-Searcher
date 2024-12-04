@@ -33,7 +33,20 @@ export async function executeSearch(question, dataToSearch, spaceId) {
         {role: "system", content: getSearchPrompt(question, promptAugmentation, spaceId)}
     ]);
     console.log("Final response:", response);
+    
+    return markdownToHtml(response);
 }
+
+
+
+
+
+// ================================= Markdown to html
+function markdownToHtml(text) {
+    const converter = new showdown.Converter();
+    return converter.makeHtml(text);
+}
+
 
 
 
