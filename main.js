@@ -161,7 +161,7 @@ document.getElementById('custom-search-button').addEventListener('click', async 
 
     try {
         const kaitenData = await fetchKaitenAllData();
-        const searchResults = await executeSearch(question, kaitenData);
+        const searchResults = await executeSearch(question, kaitenData, SPACE_ID);
 
         // Показать результат
         result.innerHTML = `<pre>${JSON.stringify(searchResults, null, 2)}</pre>`;
