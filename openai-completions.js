@@ -10,14 +10,14 @@ chrome.storage.local.get(['API_URL', 'ACCESS_TOKEN', 'OPENAI_KEY'], (result) => 
 });
 
 export async function executeSearch(question, dataToSearch, spaceId) {
-    const queryEmbedding = await getEmbeddings([question]);
+    const queryEmbedding = await getEmbeddingsCachedVersion([question]);
     
     // todo: можно кэшировать в локал сторадже все эмбеддинги
 
     // todo: метод для конвертации карточки с названием и дескрипшном в одну строку
     // todo: запихнуть это вместе в эмбеддинг, а не только тайтл
     const cardTexts = dataToSearch.map(d => d.title);
-    const cardEmbeddings = (await getEmbeddings(cardTexts));//.sort(e => -e.index);
+    const cardEmbeddings = (await getEmbeddingsCachedVersion(cardTexts));//.sort(e => -e.index);
     
     const nearestEmbeddings = findTopNCosine(cardEmbeddings, queryEmbedding[0], 100);
     console.log("Nearest embeddings:", nearestEmbeddings);
@@ -124,6 +124,53 @@ async function getEmbeddings(inputArray, options = {}) {
         ...options
     });
     return response.data;
+}
+
+async function getEmbeddingsCachedVersion(inputArray, options = {}) {
+    const storagePrefix = "embeddings_cache_";
+    const maxCacheKeyLength = 2000; // Max character limit for caching
+    const results = {};
+    const toFetch = [];
+
+    // Check cache and prepare list of non-cached texts
+    for (const text of inputArray) {
+        const cacheKey = `${storagePrefix}${text}`;
+        if (text.length > maxCacheKeyLength) {
+            // If text is too large, skip caching
+            toFetch.push(text);
+        } else if (localStorage.getItem(cacheKey)) {
+            // Retrieve from cache
+            results[text] = JSON.parse(localStorage.getItem(cacheKey));
+        } else {
+            // Add to fetch list
+            toFetch.push(text);
+        }
+    }
+
+    // Fetch embeddings for non-cached texts
+    if (toFetch.length > 0) {
+        const response = await sendRequest("embeddings", "POST", {
+            input: toFetch,
+            model: "text-embedding-3-small",
+            encoding_format: "float",
+            ...options
+        });
+
+        // Cache new results and add them to results object
+        for (let i = 0; i < toFetch.length; i++) {
+            const text = toFetch[i];
+            const embedding = response.data[i];
+            results[text] = embedding;
+
+            if (text.length <= maxCacheKeyLength) {
+                const cacheKey = `${storagePrefix}${text}`;
+                localStorage.setItem(cacheKey, JSON.stringify(embedding));
+            }
+        }
+    }
+
+    // Return results in the same order as inputArray
+    return inputArray.map(text => results[text]);
 }
 
 async function sendRequest(urlPath, method, payload) {
