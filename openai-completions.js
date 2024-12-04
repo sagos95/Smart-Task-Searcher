@@ -10,14 +10,15 @@ chrome.storage.local.get(['API_URL', 'ACCESS_TOKEN', 'OPENAI_KEY'], (result) => 
 });
 
 export async function executeSearch(question, dataToSearch, spaceId) {
-    const queryEmbedding = await getEmbeddingsCachedVersion([question]);
+    // todo: кэш пока что падает с ошибкой Ошибка: Failed to execute 'setItem' on 'Storage': Setting the value of 'embeddings_cache_Переехать с Nimble на натив: DUIKit' exceeded the quota.
+    const queryEmbedding = await getEmbeddings([question]);
     
     // todo: можно кэшировать в локал сторадже все эмбеддинги
 
     // todo: метод для конвертации карточки с названием и дескрипшном в одну строку
     // todo: запихнуть это вместе в эмбеддинг, а не только тайтл
     const cardTexts = dataToSearch.map(d => d.title);
-    const cardEmbeddings = (await getEmbeddingsCachedVersion(cardTexts));//.sort(e => -e.index);
+    const cardEmbeddings = (await getEmbeddings(cardTexts));//.sort(e => -e.index);
     
     const nearestEmbeddings = findTopNCosine(cardEmbeddings, queryEmbedding[0], 100);
     console.log("Nearest embeddings:", nearestEmbeddings);
