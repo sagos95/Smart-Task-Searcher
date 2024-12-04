@@ -12,16 +12,15 @@ chrome.storage.local.get(['API_URL', 'ACCESS_TOKEN', 'OPENAI_KEY'], (result) => 
 export async function executeSearch(question, dataToSearch, spaceId) {
     const queryEmbedding = await getEmbeddings([question]);
     
+    // todo: можно кэшировать в локал сторадже все эмбеддинги
+
     // todo: метод для конвертации карточки с названием и дескрипшном в одну строку
     // todo: запихнуть это вместе в эмбеддинг, а не только тайтл
-    // todo: можно кэшировать в локал сторадже все эмбеддинги
-    
     const cardTexts = dataToSearch.map(d => d.title);
     const cardEmbeddings = (await getEmbeddings(cardTexts));//.sort(e => -e.index);
     
     const nearestEmbeddings = findTopNCosine(cardEmbeddings, queryEmbedding[0], 100);
     console.log("Nearest embeddings:", nearestEmbeddings);
-    // nearestEmbeddings: { similarity:, vector: {index: !, embedding:[]}}
     const promptAugmentation = nearestEmbeddings.reduce((sum, embedding) => {
         const card = dataToSearch[embedding.vector.index];
         return card 
@@ -34,20 +33,8 @@ export async function executeSearch(question, dataToSearch, spaceId) {
     ]);
     console.log("Final response:", response);
     
-    return markdownToHtml(response);
+    return response;
 }
-
-
-
-
-
-// ================================= Markdown to html
-function markdownToHtml(text) {
-    const converter = new showdown.Converter();
-    return converter.makeHtml(text);
-}
-
-
 
 
 
@@ -61,11 +48,11 @@ function getSearchPrompt(userQuery, augmentedContext, spaceId) {
         ${augmentedContext}
         
         - Среди данного списка найди и выдай список id и title карточек, которые лучше всего отвечают искомому запросу, 
-        и оформи итоговый ответ с указанием ссылок на карточки в следующем виде md разметки (т.е. сделай сам title
+        и оформи итоговый ответ с указанием ссылок на карточки в следующем виде html разметки (т.е. сделай сам title
         карточек кликабельными ссылками):
         "
-        [TITLE_КАРТОЧКИ_1](${urlForCards}/ID_КАРТОЧКИ_1)
-        [TITLE_КАРТОЧКИ_2](${urlForCards}/ID_КАРТОЧКИ_2)
+        <a href='${urlForCards}/ID_КАРТОЧКИ_1'>TITLE_КАРТОЧКИ_1</a>
+        <a href='${urlForCards}/ID_КАРТОЧКИ_2'>TITLE_КАРТОЧКИ_2</a>
         ...
         ".
         - При этом не обязательно выдавать сухой список ссылок, и если это будет необходимо для понимания, можно дать
