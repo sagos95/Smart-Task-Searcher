@@ -10,6 +10,9 @@ chrome.storage.local.get(['API_URL', 'ACCESS_TOKEN', 'OPENAI_KEY'], (result) => 
 });
 
 export async function executeSearch(question, dataToSearch, spaceId) {
+    // todo: создать ембеддинговые запросы
+    // const response = await getCompletion([{role: "system", content: getSearchPrompt(question, promptAugmentation, spaceId)}]);
+    
     // todo: кэш пока что падает с ошибкой Ошибка: Failed to execute 'setItem' on 'Storage': Setting the value of 'embeddings_cache_Переехать с Nimble на натив: DUIKit' exceeded the quota.
     const queryEmbedding = await getEmbeddings([question]);
     
@@ -18,7 +21,7 @@ export async function executeSearch(question, dataToSearch, spaceId) {
     // todo: метод для конвертации карточки с названием и дескрипшном в одну строку
     // todo: запихнуть это вместе в эмбеддинг, а не только тайтл
     const cardTexts = dataToSearch.map(d => d.title);
-    const cardEmbeddings = (await getEmbeddings(cardTexts));//.sort(e => -e.index);
+    const cardEmbeddings = (await getEmbeddings(cardTexts));
     
     const nearestEmbeddings = findTopNCosine(cardEmbeddings, queryEmbedding[0], 100);
     console.log("Nearest embeddings:", nearestEmbeddings);
@@ -29,9 +32,7 @@ export async function executeSearch(question, dataToSearch, spaceId) {
             : sum;
     }, '');
     
-    const response = await getCompletion([
-        {role: "system", content: getSearchPrompt(question, promptAugmentation, spaceId)}
-    ]);
+    const response = await getCompletion([{role: "system", content: getSearchPrompt(question, promptAugmentation, spaceId)}]);
     console.log("Final response:", response);
     
     return response;
@@ -116,6 +117,9 @@ async function getCompletion(messages, options = {}) {
 }
 
 async function getEmbeddings(inputArray, options = {}) {
+    if (inputArray.length === 0)
+        return [];
+    
     const response = await sendRequest("embeddings", "POST", {
         input: inputArray,
         // model: "text-embedding-ada-002", // $0.100 / 1M tokens
@@ -127,51 +131,40 @@ async function getEmbeddings(inputArray, options = {}) {
     return response.data;
 }
 
+// todo: кэшируются и индексы, а вот это уже некорректно. нужно искать по тексту
 async function getEmbeddingsCachedVersion(inputArray, options = {}) {
     const storagePrefix = "embeddings_cache_";
     const maxCacheKeyLength = 2000; // Max character limit for caching
-    const results = {};
+    const cachedAndFetchedData = {};
     const toFetch = [];
 
     // Check cache and prepare list of non-cached texts
     for (const text of inputArray) {
         const cacheKey = `${storagePrefix}${text}`;
-        if (text.length > maxCacheKeyLength) {
-            // If text is too large, skip caching
-            toFetch.push(text);
-        } else if (localStorage.getItem(cacheKey)) {
-            // Retrieve from cache
-            results[text] = JSON.parse(localStorage.getItem(cacheKey));
+        if (localStorage.getItem(cacheKey)) {
+            cachedAndFetchedData[text] = JSON.parse(localStorage.getItem(cacheKey));
         } else {
-            // Add to fetch list
             toFetch.push(text);
         }
     }
-
+    
     // Fetch embeddings for non-cached texts
-    if (toFetch.length > 0) {
-        const response = await sendRequest("embeddings", "POST", {
-            input: toFetch,
-            model: "text-embedding-3-small",
-            encoding_format: "float",
-            ...options
-        });
+    const fetchResponse = getEmbeddings(toFetch, options)
+    
+    // Cache new results and add them to results object
+    for (let i = 0; i < toFetch.length; i++) {
+        const text = toFetch[i];
+        const embedding = fetchResponse[i];
+        cachedAndFetchedData[text] = embedding;
 
-        // Cache new results and add them to results object
-        for (let i = 0; i < toFetch.length; i++) {
-            const text = toFetch[i];
-            const embedding = response.data[i];
-            results[text] = embedding;
-
-            if (text.length <= maxCacheKeyLength) {
-                const cacheKey = `${storagePrefix}${text}`;
-                localStorage.setItem(cacheKey, JSON.stringify(embedding));
-            }
+        if (text.length <= maxCacheKeyLength) {
+            const cacheKey = `${storagePrefix}${text}`;
+            localStorage.setItem(cacheKey, JSON.stringify(embedding));
         }
     }
 
     // Return results in the same order as inputArray
-    return inputArray.map(text => results[text]);
+    return inputArray.map(text => cachedAndFetchedData[text]);
 }
 
 async function sendRequest(urlPath, method, payload) {
