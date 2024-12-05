@@ -53,8 +53,9 @@ function getSearchPrompt(userQuery, augmentedContext, spaceId) {
         и оформи итоговый ответ с указанием ссылок на карточки в следующем виде html разметки (т.е. сделай сам title
         карточек кликабельными ссылками):
         "
-        <a href='${urlForCards}/ID_КАРТОЧКИ_1'>TITLE_КАРТОЧКИ_1</a>
-        <a href='${urlForCards}/ID_КАРТОЧКИ_2'>TITLE_КАРТОЧКИ_2</a>
+        • <a href='${urlForCards}/ID_КАРТОЧКИ_1'>TITLE_КАРТОЧКИ_1</a>
+        <br>
+        • <a href='${urlForCards}/ID_КАРТОЧКИ_2'>TITLE_КАРТОЧКИ_2</a>
         ...
         ".
         - При этом не обязательно выдавать сухой список ссылок, и если это будет необходимо для понимания, можно дать
