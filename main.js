@@ -246,7 +246,7 @@ that.components = {
         while (hasMoreData) {
             try {
                 // Construct URL with the current offset
-                const url = `${API_URL}?space_id=${that.SPACE_ID}&offset=${offset}&limit=${PAGE_SIZE}&archived=false`;
+                const url = `${API_URL}?space_id=${that.SPACE_ID}&offset=${offset}&limit=${PAGE_SIZE}`;
 
                 // Make the API call
                 const response = await fetch(url, {
