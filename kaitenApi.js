@@ -8,7 +8,7 @@ export const fetchKaitenAllData = async () => {
     while (hasMoreData) {
         try {
             // Construct URL with the current offset
-            const url = `${API_URL}?space_id=${that.SPACE_ID}&offset=${offset}&limit=${PAGE_SIZE}`;
+            const url = `${API_URL}?space_id=${SPACE_ID}&offset=${offset}&limit=${PAGE_SIZE}&additional_card_fields=description`;
 
             // Make the API call
             const response = await fetch(url, {
@@ -26,7 +26,15 @@ export const fetchKaitenAllData = async () => {
             const data = await response.json();
             const extractedFieldsJson = data.map(obj => ({
                 id: obj.id,
-                title: obj.title
+                title: obj.title,
+                description: obj.description,
+                archived: obj.archived,
+                state: obj.state,
+                time_spent_sum: obj.time_spent_sum,
+                time_blocked_sum: obj.time_blocked_sum,
+                blocked: obj.blocked,
+                size_text: obj.size_text,
+                owner: obj.owner.full_name,
             }));
 
             // Add the current batch to the overall data
