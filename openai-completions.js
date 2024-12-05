@@ -20,15 +20,17 @@ export async function executeSearch(question, dataToSearch, spaceId) {
 
     // todo: метод для конвертации карточки с названием и дескрипшном в одну строку
     // todo: запихнуть это вместе в эмбеддинг, а не только тайтл
-    const cardTexts = dataToSearch.map(d => d.title);
-    const cardEmbeddings = await getEmbeddingsCachedVersion(cardTexts);
+    // todo: композиция параметров типа "title:, owner:" будет ухудшать качество семантического поиска.
+    //       для поиска по параметрам надо использовать предварительный gpt shot и параметры API 
+    const cardTexts = dataToSearch.map(d => `title: ${d.title} owner: ${d.owner}`);
+    const cardEmbeddings = (await getEmbeddingsCachedVersion(cardTexts));
     
     const nearestEmbeddings = findTopNCosine(cardEmbeddings, queryEmbedding[0], 100);
     console.log("Nearest embeddings:", nearestEmbeddings);
     const promptAugmentation = nearestEmbeddings.reduce((sum, embedding) => {
         const card = dataToSearch[embedding.vector.index];
         return card 
-            ? sum + `- Card Id: ${card.id}; Card title: "${card.title}"; Description: ${card.description}\n\n\n`
+            ? sum + `- Card Id: ${card.id}; Card title: "${card.title}"; Owner: ${card.owner}; Description: ${card.description}\n\n\n`
             : sum;
     }, '');
     
@@ -53,8 +55,9 @@ function getSearchPrompt(userQuery, augmentedContext, spaceId) {
         и оформи итоговый ответ с указанием ссылок на карточки в следующем виде html разметки (т.е. сделай сам title
         карточек кликабельными ссылками):
         "
-        <a href='${urlForCards}/ID_КАРТОЧКИ_1'>TITLE_КАРТОЧКИ_1</a>
-        <a href='${urlForCards}/ID_КАРТОЧКИ_2'>TITLE_КАРТОЧКИ_2</a>
+        • <a href='${urlForCards}/ID_КАРТОЧКИ_1'>TITLE_КАРТОЧКИ_1</a>
+        <br>
+        • <a href='${urlForCards}/ID_КАРТОЧКИ_2'>TITLE_КАРТОЧКИ_2</a>
         ...
         ".
         - При этом не обязательно выдавать сухой список ссылок, и если это будет необходимо для понимания, можно дать

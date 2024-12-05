@@ -22,7 +22,8 @@
             "local-settings.js",
             "styles.js",
             "openai-runner-awaiter.js",
-            "openai-completions.js"
+            "openai-completions.js",
+            "kaitenApi.js"
         ]
     }]
 }
