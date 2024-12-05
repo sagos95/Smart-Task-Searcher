@@ -68,62 +68,62 @@ that.components = {
         modal.style.boxSizing = 'border-box'; // Учитывает padding в размерах
 
         modal.innerHTML = `
-    <div style="display: flex; flex-direction: column; gap: 10px;">
-      <!-- Заголовок и кнопка закрытия -->
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div style="font-size: 18px; font-weight: bold; color: #666666; text-transform: uppercase;">AI поиск</div>
-        <button id="custom-search-close" style="background: none; color: #757575; border: none; font-size: 36px; cursor: pointer;">&times;</button>
-      </div>
-
-      <!-- Поле ввода -->
-      <div style="display: flex; gap: 10px;">
-        <input id="custom-search-input" type="text" placeholder="Опишите своими словами, какую карточку хотите найти..." style="
-            flex-grow: 1; 
-            padding: 8px; 
-            border: none; 
-            border-radius: 4px;
-            background-color: #e7e7e7; 
-            font-size: 16px;">
-        <button id="custom-search-button" style="
-            padding: 8px 12px;
-            background-color: transparent;
-            color: rgba(0, 0, 0, 0.87);
-            text-transform: uppercase;
-            border: 1px solid rgba(0, 0, 0, 0.12);
-            border-radius: 4px;
-            cursor: pointer;
-            font-family: 'Roboto', sans-serif;
-            font-weight: 500;
-            line-height: 1.75;
-            ">
-            ${that.components.openAiIcon}
-            Искать
-        </button>
-      </div>
-
-      <!-- Лоадер -->
-      <div class="openai-loader" id="custom-search-loader" style="display: none; text-align: center;">
-      </div>
-
-      <!-- Результат -->
-      <div style="display: flex; flex-direction: column; gap: 10px;">
-          <div id="custom-search-result" style="
-              width: 100%;
-              min-height: fit-content;
-              overflow: auto; 
-              height: 150px; 
-              padding: 10px; 
-              border: none; 
-              border-radius: 4px; 
-              background-color: #f9f9f9; 
-              font-size: 14px;  
-              resize: none; /* Отключить возможность изменения размера */
-              white-space: pre-wrap; 
-              word-break: break-word;
-          " readonly></div>
-      </div>
-    </div>
-  `;
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <!-- Заголовок и кнопка закрытия -->
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 18px; font-weight: bold; color: #666666; text-transform: uppercase;">AI поиск</div>
+                <button id="custom-search-close" style="background: none; color: #757575; border: none; font-size: 36px; cursor: pointer;">&times;</button>
+              </div>
+        
+              <!-- Поле ввода -->
+              <div style="display: flex; gap: 10px;">
+                <input id="custom-search-input" type="text" placeholder="Опишите своими словами, какую карточку хотите найти..." style="
+                    flex-grow: 1; 
+                    padding: 8px; 
+                    border: none; 
+                    border-radius: 4px;
+                    background-color: #e7e7e7; 
+                    font-size: 16px;">
+                <button id="custom-search-button" style="
+                    padding: 8px 12px;
+                    background-color: transparent;
+                    color: rgba(0, 0, 0, 0.87);
+                    text-transform: uppercase;
+                    border: 1px solid rgba(0, 0, 0, 0.12);
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-family: 'Roboto', sans-serif;
+                    font-weight: 500;
+                    line-height: 1.75;
+                    ">
+                    ${that.components.openAiIcon}
+                    Искать
+                </button>
+              </div>
+        
+              <!-- Лоадер -->
+              <div class="openai-loader" id="custom-search-loader" style="display: none; text-align: center;">
+              </div>
+        
+              <!-- Результат -->
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                  <div id="custom-search-result" style="
+                      width: 100%;
+                      min-height: fit-content;
+                      overflow: auto; 
+                      height: 150px; 
+                      padding: 10px; 
+                      border: none; 
+                      border-radius: 4px; 
+                      background-color: #f9f9f9; 
+                      font-size: 14px;  
+                      resize: none; /* Отключить возможность изменения размера */
+                      white-space: pre-wrap; 
+                      word-break: break-word;
+                  " readonly></div>
+              </div>
+            </div>
+          `;
 
         document.body.appendChild(modal);
 
@@ -170,18 +170,6 @@ that.components = {
         
     });
 
-    topButton.addEventListener('click', async () => {
-        if (document.getElementById("popup-search-window"))
-            return;
-
-        const curtain = components.createElement(document.body, that.components.curtain);
-        const window = components.createElement(document.body, that.components.popupSearchBar);
-        const searchButton = document.getElementById("popup-search-button");
-        searchButton.addEventListener("click", onSearchButtonClick);
-        curtain.addEventListener("click", onCurtainClick);
-    });
-
-
     // Обработчик кнопки поиска
     document.getElementById('custom-search-button').addEventListener('click', async () => {
         const input = document.getElementById('custom-search-input');
@@ -218,22 +206,43 @@ that.components = {
     // Добавляем кнопку на страницу
     document.body.appendChild(topButton);
 
-    const waitForElement = (selector, interval = 500, timeout = 10000) => {
+    const waitForElement = (selector, interval = 500, timeout = 10000, requireVisible = false) => {
         return new Promise((resolve, reject) => {
             const startTime = Date.now();
 
             const checkExist = setInterval(() => {
                 const element = document.querySelector(selector);
 
-                if (element) {
+                // Если элемент найден и (если нужно) видим
+                if (element && (!requireVisible || element.offsetParent !== null)) {
                     clearInterval(checkExist);
                     resolve(element);
                 } else if (Date.now() - startTime > timeout) {
                     clearInterval(checkExist);
-                    reject(new Error(`Элемент с селектором "${selector}" не найден за ${timeout} мс.`));
+                    console.warn(`Элемент с селектором "${selector}" не найден за ${timeout} мс. Включаем наблюдатель.`);
+                    useMutationObserver(selector, resolve, reject, timeout - (Date.now() - startTime));
                 }
             }, interval);
         });
+    };
+
+    // Функция для использования MutationObserver
+    const useMutationObserver = (selector, resolve, reject, remainingTime) => {
+        const observer = new MutationObserver(() => {
+            const element = document.querySelector(selector);
+            if (element) {
+                observer.disconnect();
+                resolve(element);
+            }
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        // Завершить наблюдение после оставшегося времени
+        setTimeout(() => {
+            observer.disconnect();
+            reject(new Error(`Элемент с селектором "${selector}" так и не найден за ${remainingTime} мс.`));
+        }, remainingTime);
     };
 
     // for auto-pagination:
