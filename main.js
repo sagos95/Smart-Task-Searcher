@@ -63,8 +63,9 @@ that.components = {
         modal.style.borderRadius = '10px';
         modal.style.zIndex = '10000';
         modal.style.padding = '20px';
-        modal.style.maxHeight = '80vh'; // Ограничение по высоте
-        modal.style.overflowY = 'auto'; // Вертикальная прокрутка при переполнении
+        modal.style.maxHeight = '80vh'; // Максимальная высота окна - 80% от высоты экрана
+        modal.style.overflowY = 'auto'; // Вертикальная прокрутка только при переполнении
+        modal.style.boxSizing = 'border-box'; // Учитывает padding в размерах
 
         modal.innerHTML = `
     <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -105,19 +106,20 @@ that.components = {
       </div>
 
       <!-- Результат -->
-      <div id="custom-search-result" style=" 
-            max-width: 100%; 
-            word-wrap: break-word; 
-            overflow-wrap: break-word; 
-            white-space: pre-wrap; 
-            padding: 10px; 
-            border: 1px solid #ccc; 
-            border-radius: 5px; 
-            background-color: #f9f9f9; 
-            display: none; 
-            font-size: 14px;
-            overflow: hidden; /* Убирает выходящие элементы */
-            text-align: justify; /* Достаточно аккуратный вид для переносов */">">
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+          <textarea id="custom-search-result" style="
+              width: 100%; 
+              height: 150px; 
+              padding: 10px; 
+              border: none; 
+              border-radius: 4px; 
+              background-color: #f9f9f9; 
+              font-size: 14px; 
+              overflow-y: auto; 
+              resize: none; /* Отключить возможность изменения размера */
+              white-space: pre-wrap; 
+              word-break: break-word;
+          " readonly></textarea>
       </div>
     </div>
   `;
@@ -137,33 +139,34 @@ that.components = {
     // Создаем кнопку
     const topButton = document.createElement('button');
 
-    window.addEventListener("load", () => {
+    window.addEventListener("load", async () => {
         // todo: retry
-        setTimeout(() => {
-            const topButton = document.createElement('button');
-            topButton.className = 'v5-v559 css-1hwqkh2';
-            topButton.id = 'custom-header-button';
-            const innerButtonContent = document.createElement('template');
-            innerButtonContent.innerHTML = `
-                <div style="display: flex;">
-                  <span style="margin-right: 0.5rem">AI search</span>
-                  <div>
-                    ${that.components.openAiIcon}
-                  </div>
-                </div>
-              `;
-            topButton.appendChild(innerButtonContent.content);
+        
+        // Ждем, пока элемент появится
+        const headerButtonsContainer = await waitForElement('header > div > div:nth-child(2) > div:nth-child(2)', 500, 10000);
 
-            // Добавляем в header
-            const headerEl = document.body.getElementsByTagName('header');
-            const headerButtonsContainer = headerEl[0].children[0].children[1].children[1];
-            headerButtonsContainer.insertBefore(topButton, headerButtonsContainer.firstChild);
+        const topButton = document.createElement('button');
+        topButton.className = 'v5-v559 css-1hwqkh2';
+        topButton.id = 'custom-header-button';
+        const innerButtonContent = document.createElement('template');
+        innerButtonContent.innerHTML = `
+            <div style="display: flex;">
+              <span style="margin-right: 0.5rem">AI search</span>
+              <div>
+                ${that.components.openAiIcon}
+              </div>
+            </div>
+          `;
+        topButton.appendChild(innerButtonContent.content);
 
-            // Обработчик кнопки
-            topButton.addEventListener('click', () => {
-                document.getElementById('custom-search-modal').style.display = 'block';
-            });
-        }, "8000");
+        // Добавляем в header
+        headerButtonsContainer.insertBefore(topButton, headerButtonsContainer.firstChild);
+
+        // Обработчик кнопки
+        topButton.addEventListener('click', () => {
+            document.getElementById('custom-search-modal').style.display = 'block';
+        });
+        
     });
 
     topButton.addEventListener('click', async () => {
@@ -200,7 +203,7 @@ that.components = {
             const searchResults = await executeSearch(question, kaitenData, SPACE_ID);
 
             // Показать результат
-            result.innerHTML = `<pre>${searchResults}</pre>`;
+            result.innerHTML = searchResults;
             result.style.display = 'block';
         } catch (error) {
             result.innerHTML = `<span style="color: red;">Ошибка: ${error.message}</span>`;
@@ -213,6 +216,24 @@ that.components = {
 
     // Добавляем кнопку на страницу
     document.body.appendChild(topButton);
+
+    const waitForElement = (selector, interval = 500, timeout = 10000) => {
+        return new Promise((resolve, reject) => {
+            const startTime = Date.now();
+
+            const checkExist = setInterval(() => {
+                const element = document.querySelector(selector);
+
+                if (element) {
+                    clearInterval(checkExist);
+                    resolve(element);
+                } else if (Date.now() - startTime > timeout) {
+                    clearInterval(checkExist);
+                    reject(new Error(`Элемент с селектором "${selector}" не найден за ${timeout} мс.`));
+                }
+            }, interval);
+        });
+    };
 
     // for auto-pagination:
     const fetchKaitenAllData = async () => {
