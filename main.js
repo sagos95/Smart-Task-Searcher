@@ -52,17 +52,19 @@ that.components = {
     const createSearchModal = () => {
         const modal = document.createElement('div');
         modal.id = 'custom-search-modal';
-        modal.style.display = 'none';
         modal.style.position = 'fixed';
-        modal.style.top = '20%';
+        modal.style.display = 'none';
+        modal.style.top = '20%'; // Центрирование
         modal.style.left = '50%';
-        modal.style.transform = 'translate(-50%, -50%)';
+        modal.style.transform = 'translate(-50%, -20%)'; // Центрирование
         modal.style.width = '638px';
         modal.style.backgroundColor = 'white';
         modal.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
         modal.style.borderRadius = '10px';
         modal.style.zIndex = '10000';
         modal.style.padding = '20px';
+        modal.style.maxHeight = '80vh'; // Ограничение по высоте
+        modal.style.overflowY = 'auto'; // Вертикальная прокрутка при переполнении
 
         modal.innerHTML = `
     <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -104,13 +106,18 @@ that.components = {
 
       <!-- Результат -->
       <div id="custom-search-result" style=" 
-          overflow-x: auto; 
-          padding: 10px; 
-          border: 1px solid #ccc; 
-          border-radius: 5px; 
-          background-color: #f9f9f9; 
-          display: none; 
-          font-size: 14px;">
+            max-width: 100%; 
+            word-wrap: break-word; 
+            overflow-wrap: break-word; 
+            white-space: pre-wrap; 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 5px; 
+            background-color: #f9f9f9; 
+            display: none; 
+            font-size: 14px;
+            overflow: hidden; /* Убирает выходящие элементы */
+            text-align: justify; /* Достаточно аккуратный вид для переносов */">">
       </div>
     </div>
   `;
@@ -127,8 +134,7 @@ that.components = {
 
     const modal = createSearchModal();
 
-
-// Создаем кнопку
+    // Создаем кнопку
     const topButton = document.createElement('button');
 
     window.addEventListener("load", () => {
@@ -172,7 +178,7 @@ that.components = {
     });
 
 
-// Обработчик кнопки поиска
+    // Обработчик кнопки поиска
     document.getElementById('custom-search-button').addEventListener('click', async () => {
         const input = document.getElementById('custom-search-input');
         const loader = document.getElementById('custom-search-loader');
@@ -205,10 +211,10 @@ that.components = {
         }
     });
 
-// Добавляем кнопку на страницу
+    // Добавляем кнопку на страницу
     document.body.appendChild(topButton);
 
-// for auto-pagination:
+    // for auto-pagination:
     const fetchKaitenAllData = async () => {
         console.log("Fetching Kaiten cards...");
         let allData = [];  // Array to store all results
