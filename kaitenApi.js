@@ -8,7 +8,7 @@ export const fetchKaitenAllData = async () => {
     while (hasMoreData) {
         try {
             // Construct URL with the current offset
-            const url = `${API_URL}?space_id=${SPACE_ID}&offset=${offset}&limit=${PAGE_SIZE}&additional_card_fields=description`;
+            const url = `${API_URL}?space_id=${SPACE_ID}&offset=${offset}&limit=${PAGE_SIZE}&additional_card_fields=description&archived=false`;
 
             // Make the API call
             const response = await fetch(url, {

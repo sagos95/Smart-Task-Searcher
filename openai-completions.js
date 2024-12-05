@@ -20,7 +20,7 @@ export async function executeSearch(question, dataToSearch, spaceId) {
 
     // todo: метод для конвертации карточки с названием и дескрипшном в одну строку
     // todo: запихнуть это вместе в эмбеддинг, а не только тайтл
-    const cardTexts = dataToSearch.map(d => d.title);
+    const cardTexts = dataToSearch.map(d => `title: ${d.title} owner: ${d.owner}`);
     const cardEmbeddings = (await getEmbeddings(cardTexts));
     
     const nearestEmbeddings = findTopNCosine(cardEmbeddings, queryEmbedding[0], 100);
@@ -28,7 +28,7 @@ export async function executeSearch(question, dataToSearch, spaceId) {
     const promptAugmentation = nearestEmbeddings.reduce((sum, embedding) => {
         const card = dataToSearch[embedding.vector.index];
         return card 
-            ? sum + `- Card Id: ${card.id}; Card title: "${card.title}"; Description: ${card.description}\n\n\n`
+            ? sum + `- Card Id: ${card.id}; Card title: "${card.title}"; Description: ${card.description}: Owner: ${card.owner}\n\n\n`
             : sum;
     }, '');
     
