@@ -14,14 +14,14 @@ export async function executeSearch(question, dataToSearch, spaceId) {
     // const response = await getCompletion([{role: "system", content: getSearchPrompt(question, promptAugmentation, spaceId)}]);
     
     // todo: кэш пока что падает с ошибкой Ошибка: Failed to execute 'setItem' on 'Storage': Setting the value of 'embeddings_cache_Переехать с Nimble на натив: DUIKit' exceeded the quota.
-    const queryEmbedding = await getEmbeddings([question]);
+    const queryEmbedding = await getEmbeddingsCachedVersion([question]);
     
     // todo: можно кэшировать в локал сторадже все эмбеддинги
 
     // todo: метод для конвертации карточки с названием и дескрипшном в одну строку
     // todo: запихнуть это вместе в эмбеддинг, а не только тайтл
     const cardTexts = dataToSearch.map(d => d.title);
-    const cardEmbeddings = (await getEmbeddings(cardTexts));
+    const cardEmbeddings = await getEmbeddingsCachedVersion(cardTexts);
     
     const nearestEmbeddings = findTopNCosine(cardEmbeddings, queryEmbedding[0], 100);
     console.log("Nearest embeddings:", nearestEmbeddings);
@@ -141,30 +141,37 @@ async function getEmbeddingsCachedVersion(inputArray, options = {}) {
     // Check cache and prepare list of non-cached texts
     for (const text of inputArray) {
         const cacheKey = `${storagePrefix}${text}`;
-        if (localStorage.getItem(cacheKey)) {
-            cachedAndFetchedData[text] = JSON.parse(localStorage.getItem(cacheKey));
+        const cached = await getCacheItem(cacheKey); 
+        if (cached) {
+            cachedAndFetchedData[text] = cached;
         } else {
             toFetch.push(text);
         }
     }
     
     // Fetch embeddings for non-cached texts
-    const fetchResponse = getEmbeddings(toFetch, options)
+    const fetchResponse = await getEmbeddings(toFetch, options)
     
     // Cache new results and add them to results object
-    for (let i = 0; i < toFetch.length; i++) {
-        const text = toFetch[i];
+    for (let i = 0; i < fetchResponse.length; i++) {
         const embedding = fetchResponse[i];
+        const text = toFetch[embedding.index];
         cachedAndFetchedData[text] = embedding;
-
+        
         if (text.length <= maxCacheKeyLength) {
             const cacheKey = `${storagePrefix}${text}`;
-            localStorage.setItem(cacheKey, JSON.stringify(embedding));
+            await setCacheItem(cacheKey, embedding);
         }
     }
 
     // Return results in the same order as inputArray
-    return inputArray.map(text => cachedAndFetchedData[text]);
+    const resultData = [];
+    for (let i = 0; i < inputArray.length; i++) {
+        const text = inputArray[i];
+        resultData[i] = cachedAndFetchedData[text];
+        resultData[i].index = inputArray.indexOf(text);
+    }
+    return resultData;
 }
 
 async function sendRequest(urlPath, method, payload) {
@@ -189,5 +196,90 @@ async function sendRequest(urlPath, method, payload) {
     } catch (error) {
         console.error("Error:", error);
         throw error;
+    }
+}
+
+
+
+
+// ================================= Embeddings caching
+
+// todo: expiration
+const cachePrefix = 'smart-task-searcher';
+async function getCacheItem(cacheKey) {
+    if (cacheKey === "")
+        return null;
+    
+    const cachedValues = await getRawCacheItem();
+    if (!cachedValues)
+        return null;
+    
+    return cachedValues[cacheKey] || null;
+}
+
+async function setCacheItem(cacheKey, obj) {
+    try {
+        if (cacheKey === "")
+            return;
+        
+        const cachedValues = (await getRawCacheItem()) || {};
+        cachedValues[cacheKey] = obj;
+        
+        const cache = await caches.open(cachePrefix);
+        const response = new Response(JSON.stringify(cachedValues), { headers: { 'Content-Type': 'text/plain' } });
+        await cache.put(cachePrefix, response);
+    }
+    catch (error) {
+        console.error('Error saving cache:', error);
+    }
+}
+
+async function getRawCacheItem() {
+    try {
+        const cache = await caches.open(cachePrefix);
+        const response = await cache.match(cachePrefix);
+        if (response) {
+            return JSON.parse(await response.text());
+        }
+    }
+    catch (error) {
+        console.error('Error accessing cache:', error);
+    }
+    return null;
+}
+
+async function testCacheMethods() {
+    const testKey = "test key with spaces";
+    const testValue = { example: "This is a test value" };
+
+    console.log("Testing setCacheItem...");
+    await setCacheItem(testKey, testValue);
+    console.log(`Set cache for key: "${testKey}"`);
+
+    console.log("Testing getCacheItem...");
+    const retrievedValue = await getCacheItem(testKey);
+    console.log(`Retrieved value:`, retrievedValue);
+
+    if (JSON.stringify(retrievedValue) === JSON.stringify(testValue)) {
+        console.log("✅ Cache methods work correctly!");
+    } else {
+        console.error("🟥 Cache methods are not working as expected!");
+    }
+
+    console.log("Cleaning up test cache...");
+    await clearCache();
+    console.log("Cache cleared.");
+}
+
+async function clearCache() {
+    try {
+        const success = await caches.delete(cachePrefix);
+        if (success) {
+            console.log("Cache deleted successfully.");
+        } else {
+            console.warn("Cache not found or could not be deleted.");
+        }
+    } catch (error) {
+        console.error("Error clearing cache:", error);
     }
 }
