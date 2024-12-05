@@ -107,19 +107,20 @@ that.components = {
 
       <!-- Результат -->
       <div style="display: flex; flex-direction: column; gap: 10px;">
-          <textarea id="custom-search-result" style="
-              width: 100%; 
+          <div id="custom-search-result" style="
+              width: 100%;
+              min-height: fit-content;
+              overflow: auto; 
               height: 150px; 
               padding: 10px; 
               border: none; 
               border-radius: 4px; 
               background-color: #f9f9f9; 
-              font-size: 14px; 
-              overflow-y: auto; 
+              font-size: 14px;  
               resize: none; /* Отключить возможность изменения размера */
               white-space: pre-wrap; 
               word-break: break-word;
-          " readonly></textarea>
+          " readonly></div>
       </div>
     </div>
   `;
@@ -203,7 +204,7 @@ that.components = {
             const searchResults = await executeSearch(question, kaitenData, SPACE_ID);
 
             // Показать результат
-            result.innerHTML = searchResults;
+            result.innerHTML = `<pre style="white-space: break-spaces;max-height: 40rem;overflow-x: scroll;">${searchResults}</pre>`;
             result.style.display = 'block';
         } catch (error) {
             result.innerHTML = `<span style="color: red;">Ошибка: ${error.message}</span>`;
