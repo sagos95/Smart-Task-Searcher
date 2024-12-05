@@ -15,6 +15,7 @@ that.components = {
   curtain: undefined,
   popupSearchBar: undefined, 
   searchBarId: undefined,
+  openAiIcon: undefined,
   createElement: (parent, elementTemplate) => {
     const el = document.createElement('template');
     el.innerHTML = elementTemplate;
@@ -38,7 +39,8 @@ that.components = {
   that.components.curtain = styles.curtain;
   that.components.popupSearchBar = styles.popupSearchBar;
   that.components.searchBarId = styles.searchBarId;
-
+  that.components.openAiIcon = styles.openAiIcon;
+  
   const openaiRunnerAwaiter = await importAsync("openai-runner-awaiter.js");
   that.waitForRunCompletion = openaiRunnerAwaiter.waitForRunCompletion;
 
@@ -76,7 +78,7 @@ window.addEventListener("load", () => {
       topButton.addEventListener('click', () => {
           document.getElementById('custom-search-modal').style.display = 'block';
       });
-  }, "2000");
+  }, "8000");
 });
 
 topButton.addEventListener('click', async () => {
@@ -110,14 +112,34 @@ const createSearchModal = () => {
     <div style="display: flex; flex-direction: column; gap: 10px;">
       <!-- Заголовок и кнопка закрытия -->
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div style="font-size: 18px; font-weight: bold;">AI SEARCH</div>
-        <button id="custom-search-close" style="background: none; border: none; font-size: 18px; cursor: pointer;">&times;</button>
+        <div style="font-size: 18px; font-weight: bold; color: #666666; text-transform: uppercase;">AI поиск</div>
+        <button id="custom-search-close" style="background: none; color: #757575; border: none; font-size: 36px; cursor: pointer;">&times;</button>
       </div>
 
       <!-- Поле ввода -->
       <div style="display: flex; gap: 10px;">
-        <input id="custom-search-input" type="text" placeholder="Опишите своими словами, какую карточку хотите найти..." style="flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px;">
-        <button id="custom-search-button" style="padding: 8px 12px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">Искать</button>
+        <input id="custom-search-input" type="text" placeholder="Опишите своими словами, какую карточку хотите найти..." style="
+            flex-grow: 1; 
+            padding: 8px; 
+            border: none; 
+            border-radius: 4px;
+            background-color: #e7e7e7; 
+            font-size: 16px;">
+        <button id="custom-search-button" style="
+            padding: 8px 12px;
+            background-color: transparent;
+            color: rgba(0, 0, 0, 0.87);
+            text-transform: uppercase;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Roboto', sans-serif;
+            font-weight: 500;
+            line-height: 1.75;
+            ">
+            ${that.components.openAiIcon}
+            Искать
+        </button>
       </div>
 
       <!-- Лоадер -->
@@ -125,7 +147,15 @@ const createSearchModal = () => {
       </div>
 
       <!-- Результат -->
-      <div id="custom-search-result" style="max-height: 150px; overflow-y: auto; padding: 10px; border: 1px solid #ccc; border-radius: 5px; background-color: #f9f9f9; display: none; font-size: 14px;"></div>
+      <div id="custom-search-result" style=" 
+          overflow-x: auto; 
+          padding: 10px; 
+          border: 1px solid #ccc; 
+          border-radius: 5px; 
+          background-color: #f9f9f9; 
+          display: none; 
+          font-size: 14px;">
+      </div>
     </div>
   `;
 
