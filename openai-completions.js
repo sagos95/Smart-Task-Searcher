@@ -10,17 +10,13 @@ chrome.storage.local.get(['API_URL', 'ACCESS_TOKEN', 'OPENAI_KEY'], (result) => 
 });
 
 export async function executeSearch(question, dataToSearch, spaceId) {
-    // todo: создать ембеддинговые запросы
+    // todo: создать ембеддинговые запросы через gpt
     // const response = await getCompletion([{role: "system", content: getSearchPrompt(question, promptAugmentation, spaceId)}]);
     
-    // todo: кэш пока что падает с ошибкой Ошибка: Failed to execute 'setItem' on 'Storage': Setting the value of 'embeddings_cache_Переехать с Nimble на натив: DUIKit' exceeded the quota.
     const queryEmbedding = await getEmbeddingsCachedVersion([question]);
     
-    // todo: можно кэшировать в локал сторадже все эмбеддинги
-
-    // todo: метод для конвертации карточки с названием и дескрипшном в одну строку
-    // todo: запихнуть это вместе в эмбеддинг, а не только тайтл
-    // todo: композиция параметров типа "title:, owner:" будет ухудшать качество семантического поиска.
+    // todo: метод для конвертации карточки с названием и дескрипшном в одну строку. надо запихнуть это вместе в эмбеддинг, а не только тайтл
+    // todo: композиция именно параметров типа "title:, owner:" будет ухудшать качество семантического поиска.
     //       для поиска по параметрам надо использовать предварительный gpt shot и параметры API 
     const cardTexts = dataToSearch.map(d => `title: ${d.title} owner: ${d.owner}`);
     const cardEmbeddings = (await getEmbeddingsCachedVersion(cardTexts));
@@ -134,7 +130,6 @@ async function getEmbeddings(inputArray, options = {}) {
     return response.data;
 }
 
-// todo: кэшируются и индексы, а вот это уже некорректно. нужно искать по тексту
 async function getEmbeddingsCachedVersion(inputArray, options = {}) {
     const storagePrefix = "embeddings_cache_";
     const maxCacheKeyLength = 2000; // Max character limit for caching
