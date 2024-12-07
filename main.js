@@ -1,5 +1,4 @@
 // noinspection ExceptionCaughtLocallyJS
-
 const that = this;
 
 const PAGE_SIZE = 100;
@@ -49,7 +48,7 @@ that.components = {
     that.executeSearch = openaiCompletions.executeSearch;
     
     const kaitenApi = await importAsync("kaitenApi.js");
-    that.fetchKaitenAllData = kaitenApi.fetchKaitenAllData;
+    that.fetchKaitenDataWithCache = kaitenApi.fetchKaitenDataWithCache;
 })().then(() => {
     // Создаем модальное окно
     const createSearchModal = () => {
@@ -191,7 +190,7 @@ that.components = {
         result.innerHTML = '';
 
         try {
-            const kaitenData = await fetchKaitenAllData();
+            const kaitenData = await fetchKaitenDataWithCache();
             const searchResults = await executeSearch(question, kaitenData, SPACE_ID);
 
             // Показать результат
