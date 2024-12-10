@@ -23,7 +23,7 @@ that.components = {
     }
 };
 
-// imports
+// imports and app starting
 (async () => {
     const importAsync = (fileName) => import(chrome.runtime.getURL(fileName));
 
@@ -49,7 +49,62 @@ that.components = {
     
     const kaitenApi = await importAsync("kaitenApi.js");
     that.fetchKaitenDataWithCache = kaitenApi.fetchKaitenDataWithCache;
-})().then(() => {
+    
+    await start();
+})()
+
+
+
+
+
+// ========================================= Html elements searcher
+
+const waitForElement = (selector, interval = 500, timeout = 10000, requireVisible = false) => {
+    return new Promise((resolve, reject) => {
+        const startTime = Date.now();
+
+        const checkExist = setInterval(() => {
+            const element = document.querySelector(selector);
+
+            // Если элемент найден и (если нужно) видим
+            if (element && (!requireVisible || element.offsetParent !== null)) {
+                clearInterval(checkExist);
+                resolve(element);
+            } else if (Date.now() - startTime > timeout) {
+                clearInterval(checkExist);
+                console.warn(`Элемент с селектором "${selector}" не найден за ${timeout} мс. Включаем наблюдатель.`);
+                useMutationObserver(selector, resolve, reject, timeout - (Date.now() - startTime));
+            }
+        }, interval);
+    });
+};
+
+// Функция для использования MutationObserver
+const useMutationObserver = (selector, resolve, reject, remainingTime) => {
+    const observer = new MutationObserver(() => {
+        const element = document.querySelector(selector);
+        if (element) {
+            observer.disconnect();
+            resolve(element);
+        }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // Завершить наблюдение после оставшегося времени
+    setTimeout(() => {
+        observer.disconnect();
+        reject(new Error(`Элемент с селектором "${selector}" так и не найден за ${remainingTime} мс.`));
+    }, remainingTime);
+};
+
+
+
+
+
+// ========================================= Main code
+
+async function start() {
     // Создаем модальное окно
     const createSearchModal = () => {
         const modal = document.createElement('div');
@@ -142,9 +197,9 @@ that.components = {
     const modal = createSearchModal();
 
     // Создаем кнопку
-    const topButton = document.createElement('button');
+    // const topButton = document.createElement('button');
 
-    window.addEventListener("load", async () => {
+    // window.addEventListener("load", async () => {
         // todo: retry
         
         // Ждем, пока элемент появится
@@ -172,7 +227,7 @@ that.components = {
             document.getElementById('custom-search-modal').style.display = 'block';
         });
         
-    });
+    // });
 
     // Обработчик кнопки поиска
     document.getElementById('custom-search-button').addEventListener('click', async () => {
@@ -209,46 +264,7 @@ that.components = {
 
     // Добавляем кнопку на страницу
     document.body.appendChild(topButton);
-
-    const waitForElement = (selector, interval = 500, timeout = 10000, requireVisible = false) => {
-        return new Promise((resolve, reject) => {
-            const startTime = Date.now();
-
-            const checkExist = setInterval(() => {
-                const element = document.querySelector(selector);
-
-                // Если элемент найден и (если нужно) видим
-                if (element && (!requireVisible || element.offsetParent !== null)) {
-                    clearInterval(checkExist);
-                    resolve(element);
-                } else if (Date.now() - startTime > timeout) {
-                    clearInterval(checkExist);
-                    console.warn(`Элемент с селектором "${selector}" не найден за ${timeout} мс. Включаем наблюдатель.`);
-                    useMutationObserver(selector, resolve, reject, timeout - (Date.now() - startTime));
-                }
-            }, interval);
-        });
-    };
-
-    // Функция для использования MutationObserver
-    const useMutationObserver = (selector, resolve, reject, remainingTime) => {
-        const observer = new MutationObserver(() => {
-            const element = document.querySelector(selector);
-            if (element) {
-                observer.disconnect();
-                resolve(element);
-            }
-        });
-
-        observer.observe(document.body, { childList: true, subtree: true });
-
-        // Завершить наблюдение после оставшегося времени
-        setTimeout(() => {
-            observer.disconnect();
-            reject(new Error(`Элемент с селектором "${selector}" так и не найден за ${remainingTime} мс.`));
-        }, remainingTime);
-    };
-});
+}
 
 async function getCurrentTabUrl() {
     return new Promise((resolve, reject) => {
