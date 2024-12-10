@@ -23,7 +23,8 @@
             "styles.js",
             "openai-runner-awaiter.js",
             "openai-completions.js",
-            "kaitenApi.js"
+            "kaitenApi.js",
+            "cacheApiWrapper.js"
         ]
     }]
 }
