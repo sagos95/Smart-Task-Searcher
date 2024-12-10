@@ -13,10 +13,9 @@ const CacheApiWrapper = (await import(chrome.runtime.getURL("cacheApiWrapper.js"
 const cacheApi = new CacheApiWrapper("sts-embeddings/space-id=", 15 * 60 * 1000);
 
 export async function executeSearch(question, dataToSearch, spaceId) {
-    // todo: создать ембеддинговые запросы через gpt
-    // const response = await getCompletion([{role: "system", content: getSearchPrompt(question, promptAugmentation, spaceId)}]);
+    const improvedEmbeddingQuery = await getImprovedEmbeddingQuery(question);
     
-    const queryEmbedding = await getEmbeddingsCachedVersion([question], `text_${question}`);
+    const queryEmbedding = await getEmbeddingsCachedVersion([improvedEmbeddingQuery], `text_${improvedEmbeddingQuery}`);
     
     // todo: метод для конвертации карточки с названием и дескрипшном в одну строку. надо запихнуть это вместе в эмбеддинг, а не только тайтл
     // todo: композиция именно параметров типа "title:, owner:" будет ухудшать качество семантического поиска.
@@ -29,7 +28,7 @@ export async function executeSearch(question, dataToSearch, spaceId) {
     const promptAugmentation = nearestEmbeddings.reduce((sum, embedding) => {
         const card = dataToSearch[embedding.vector.index];
         return card 
-            ? sum + `${JSON.stringify(d)}\n\n\n`
+            ? sum + `${JSON.stringify(card)}\n\n\n`
             : sum;
     }, '');
     
@@ -66,6 +65,47 @@ function getSearchPrompt(userQuery, augmentedContext, spaceId) {
         `;
     return prompt;
 }
+
+function getEmbeddingSearchTermPrompt(userQuery) {
+    const prompt =
+        `Преобразуй данный вопрос пользователя в текст, который можно использовать для семантического векторного поиска. Если вопрос
+        уже в достаточной степени подходит для того, чтобы использовать его в семантическом векторном поиске, оставь его как есть.
+        Вопрос пользователя: "${userQuery}"
+        Скорректированный запрос помести в поле improved_embedding_query, оставляя поле error_description пустым.
+        Если по каким-то причинам это невозможно, опиши ошибку в поле error_description.`;
+    return prompt;
+}
+
+async function getImprovedEmbeddingQuery(question) {
+    const jsonSchema =
+        {
+            "name": "embedding_improvement",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "improved_embedding_query": {"type": "string"},
+                    "error_description": {"type": "string"}
+                },
+                "required": [],
+                "additionalProperties": false
+            },
+        };
+
+    const responseRaw = await getCompletion(
+        [{role: "system", content: getEmbeddingSearchTermPrompt(question)}],
+        {response_format: {type: "json_schema", json_schema: jsonSchema}});
+    const response = JSON.parse(responseRaw);
+    
+    if ((response.error_description && response.error_description !== '') || !response.improved_embedding_query)
+        throw new Error(`Bad question error: ${response.error_description}`);
+    
+    console.log(`Improved embedding query: ${response.improved_embedding_query}`);
+    return response.improved_embedding_query;
+}
+
+
+
+
 
 
 
