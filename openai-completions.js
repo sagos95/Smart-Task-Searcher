@@ -21,15 +21,15 @@ export async function executeSearch(question, dataToSearch, spaceId) {
     // todo: метод для конвертации карточки с названием и дескрипшном в одну строку. надо запихнуть это вместе в эмбеддинг, а не только тайтл
     // todo: композиция именно параметров типа "title:, owner:" будет ухудшать качество семантического поиска.
     //       для поиска по параметрам надо использовать предварительный gpt shot и параметры API 
-    const cardTexts = dataToSearch.map(d => `title: ${d.title} owner: ${d.owner}`);
-    const cardEmbeddings = (await getEmbeddingsCachedVersion(cardTexts, `spaceId_${spaceId}`));
+    const cardTexts = dataToSearch.map(d => JSON.stringify(d));
+    const cardEmbeddings = (await getEmbeddingsCachedVersion(cardTexts));
     
     const nearestEmbeddings = findTopNCosine(cardEmbeddings, queryEmbedding[0], 100);
     console.log("Nearest embeddings:", nearestEmbeddings);
     const promptAugmentation = nearestEmbeddings.reduce((sum, embedding) => {
         const card = dataToSearch[embedding.vector.index];
         return card 
-            ? sum + `- Card Id: ${card.id}; Card title: "${card.title}"; Owner: ${card.owner}; Description: ${card.description}\n\n\n`
+            ? sum + `${JSON.stringify(d)}\n\n\n`
             : sum;
     }, '');
     
