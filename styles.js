@@ -1,6 +1,10 @@
 export const css = 
 `
 <style>
+    .task-searcher-button:hover {
+        background: #eff1f1 !important;
+    }
+
     #custom-header-button:hover {
         background: #ffffff !important;
         color: black;
@@ -15,7 +19,7 @@ export const css =
         right: 2rem;
         background: #eff1f1 !important;
         box-shadow: 0 7px 9px -4px #a8a8a8;
-        z-index: 100;
+        z-index: 10000;
         transition: all 0.3s;
     }
       

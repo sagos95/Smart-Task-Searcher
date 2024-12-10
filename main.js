@@ -141,7 +141,7 @@ async function start() {
                     border-radius: 4px;
                     background-color: #e7e7e7; 
                     font-size: 16px;">
-                <button id="custom-search-button" style="
+                <button id="custom-search-button" class="task-searcher-button" style="
                     padding: 8px 12px;
                     background-color: transparent;
                     color: rgba(0, 0, 0, 0.87);
@@ -254,6 +254,7 @@ async function start() {
             result.innerHTML = `<pre style="white-space: break-spaces;max-height: 40rem;overflow-x: scroll;">${searchResults}</pre>`;
             result.style.display = 'block';
         } catch (error) {
+            console.log(error);
             result.innerHTML = `<span style="color: red;">Ошибка: ${error.message}</span>`;
             result.style.display = 'block';
         } finally {
