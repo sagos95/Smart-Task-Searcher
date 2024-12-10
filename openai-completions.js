@@ -22,7 +22,7 @@ export async function executeSearch(question, dataToSearch, spaceId) {
     // todo: композиция именно параметров типа "title:, owner:" будет ухудшать качество семантического поиска.
     //       для поиска по параметрам надо использовать предварительный gpt shot и параметры API 
     const cardTexts = dataToSearch.map(d => JSON.stringify(d));
-    const cardEmbeddings = (await getEmbeddingsCachedVersion(cardTexts));
+    const cardEmbeddings = (await getEmbeddingsCachedVersion(cardTexts, `space-id_${spaceId}`));
     
     const nearestEmbeddings = findTopNCosine(cardEmbeddings, queryEmbedding[0], 100);
     console.log("Nearest embeddings:", nearestEmbeddings);
