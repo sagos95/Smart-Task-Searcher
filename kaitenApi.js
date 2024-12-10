@@ -2,11 +2,10 @@
 const CACHE_PREFIX = "kaiten-cache"; // Префикс для вашего кэша
 const CACHE_EXPIRATION_TIME = 15 * 60 * 1000; // 15 минут в миллисекундах
 
-const CacheAPIWrapper = (await import(chrome.runtime.getURL("cacheApiWrapper.js"))).CacheAPIWrapper;
-const withCacheApi = (await import(chrome.runtime.getURL("cacheApiWrapper.js"))).withCacheApi;
+const CacheApiWrapper = (await import(chrome.runtime.getURL("cacheApiWrapper.js"))).CacheApiWrapper;
 
 // Создаем экземпляр кэша
-const cacheAPI = new CacheAPIWrapper(CACHE_PREFIX, CACHE_EXPIRATION_TIME);
+const cacheApi = new CacheApiWrapper(CACHE_PREFIX, CACHE_EXPIRATION_TIME);
 
 
 // for auto-pagination:
@@ -73,7 +72,7 @@ export const fetchKaitenAllData = async () => {
 
 // Используем метод с кэшированием
 export const fetchKaitenDataWithCache = async () => {
-    return await withCacheApi(SPACE_ID, fetchKaitenAllData, cacheAPI);
+    return await cacheApi.withCacheApi(SPACE_ID, fetchKaitenAllData);
 };
 
 

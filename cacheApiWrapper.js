@@ -1,5 +1,5 @@
 
-export class CacheAPIWrapper {
+export class CacheApiWrapper {
     constructor(cachePrefix, expirationTime) {
         this.cachePrefix = cachePrefix;
         this.expirationTime = expirationTime;
@@ -44,17 +44,17 @@ export class CacheAPIWrapper {
             await cache.delete(request);
         }
     }
+
+    async withCacheApi(key, fn) {
+        const cachedData = await this.get(key);
+        if (cachedData) {
+            console.log("Returning cached data from Cache API...");
+            return cachedData;
+        }
+
+        console.log("Fetching fresh data...");
+        const result = await fn();
+        await this.set(key, result);
+        return result;
+    };
 }
-
-export const withCacheApi = async (key, fn, cache = cacheAPI) => {
-    const cachedData = await cache.get(key);
-    if (cachedData) {
-        console.log("Returning cached data from Cache API...");
-        return cachedData;
-    }
-
-    console.log("Fetching fresh data...");
-    const result = await fn();
-    await cache.set(key, result);
-    return result;
-};
