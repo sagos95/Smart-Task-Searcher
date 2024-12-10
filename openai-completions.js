@@ -25,7 +25,9 @@ export async function executeSearch(question, dataToSearch, spaceId) {
     
     const nearestEmbeddings = findTopNCosine(cardEmbeddings, queryEmbedding[0], 100);
     console.log("Nearest embeddings:", nearestEmbeddings);
-    const promptAugmentation = nearestEmbeddings.reduce((sum, embedding) => {
+    const similarEmbeddings = nearestEmbeddings.filter(e => e.similarity >= 0.3);
+    console.log("Similar embeddings:", similarEmbeddings);
+    const promptAugmentation = similarEmbeddings.reduce((sum, embedding) => {
         const card = dataToSearch[embedding.vector.index];
         return card 
             ? sum + `${JSON.stringify(card)}\n\n\n`
