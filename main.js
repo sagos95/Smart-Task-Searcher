@@ -137,6 +137,8 @@ that.components = {
         return modal;
     };
 
+    that.fetchKaitenDataWithCache();
+
     const modal = createSearchModal();
 
     // Создаем кнопку
