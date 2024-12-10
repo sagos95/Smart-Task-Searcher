@@ -47,8 +47,8 @@ export const fetchKaitenAllData = async () => {
                     time_blocked_sum: obj.time_blocked_sum,
                     blocked: obj.blocked,
                     size_text: obj.size_text,
-                    owner: obj.owner.full_name,
-                    responsible: responsibleMember?.full_name || null
+                    completed_at: obj.completed_at,
+                    responsible: responsibleMember?.full_name || obj.owner?.full_name || "Unassigned",
                 }
             });
 
