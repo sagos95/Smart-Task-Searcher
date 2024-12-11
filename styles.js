@@ -1,6 +1,21 @@
 export const css = 
 `
 <style>
+    #custom-search-result a:hover {
+        background: #eff1f1;
+        color: #9c27b0;
+    }
+    
+    #custom-search-result a {
+        padding: 5px;
+        border-radius: 4px;
+        text-decoration: none;
+        border: 1px solid #d3d3d3;
+        display: inline-block;
+        width: 90%;
+        vertical-align: middle;
+    }
+    
     .task-searcher-button:hover {
         background: #eff1f1 !important;
     }
@@ -47,6 +62,20 @@ export const css =
       border-radius: 50%;
       border: 0.25rem solid rgb(156, 39, 176);
       animation: prixClipFix 2s linear infinite ;
+    }
+    
+    #custom-search-close:hover {
+        color: #757575;
+    }
+    
+    #custom-search-close {
+        background: none; 
+        border: none;
+        font-size: 36px;
+        cursor: pointer;
+        color: #9f9f9f;
+        padding: 0;
+        line-height: 1rem;
     }
 
     @keyframes rotate {

@@ -129,7 +129,7 @@ async function start() {
               <!-- Заголовок и кнопка закрытия -->
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="font-size: 18px; font-weight: bold; color: #666666; text-transform: uppercase;">AI поиск</div>
-                <button id="custom-search-close" style="background: none; color: #757575; border: none; font-size: 36px; cursor: pointer;">&times;</button>
+                <button id="custom-search-close">&times;</button>
               </div>
         
               <!-- Поле ввода -->
@@ -157,9 +157,10 @@ async function start() {
                     Искать
                 </button>
               </div>
-        
+              <div style="text-align: center;font-size: 0.7rem;color: #9e9e9e;">Поиск производится по задачам из текущего пространства #${SPACE_ID}</div>
               <!-- Лоадер -->
-              <div class="openai-loader" id="custom-search-loader" style="display: none; text-align: center;">
+              <div>
+                <div class="openai-loader" id="custom-search-loader" style="display: none;margin: auto;"></div>
               </div>
         
               <!-- Результат -->
@@ -167,17 +168,13 @@ async function start() {
                   <div id="custom-search-result" style="
                       width: 100%;
                       min-height: fit-content;
-                      overflow: auto; 
                       height: 150px; 
-                      padding: 10px; 
-                      border: none; 
-                      border-radius: 4px; 
-                      background-color: #f9f9f9; 
-                      font-size: 14px;  
+                      border: 1px solid #e1e1e1; 
+                      border-radius: 4px;
                       resize: none; /* Отключить возможность изменения размера */
                       white-space: pre-wrap; 
-                      word-break: break-word;
-                  " readonly></div>
+                      word-break: break-word;">
+                  </div>
               </div>
             </div>
           `;
@@ -251,7 +248,7 @@ async function start() {
             const searchResults = await executeSearch(question, kaitenData, SPACE_ID);
 
             // Показать результат
-            result.innerHTML = `<pre style="white-space: break-spaces;max-height: 40rem;overflow-x: scroll;">${searchResults}</pre>`;
+            result.innerHTML = `<div style="white-space: break-spaces;max-height: 50vh;overflow-y: scroll;padding: 12px;">${searchResults}</div>`;
             result.style.display = 'block';
         } catch (error) {
             console.log(error);
