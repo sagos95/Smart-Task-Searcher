@@ -157,7 +157,7 @@ async function start() {
                     Искать
                 </button>
               </div>
-              <div style="text-align: center;font-size: 0.7rem;color: #9e9e9e;">Поиск производится по задачам из текущего пространства #${SPACE_ID}</div>
+              <div style="font-size: 0.7rem;color: #9e9e9e;">Поиск производится по задачам из текущего пространства #${SPACE_ID}</div>
               <!-- Лоадер -->
               <div>
                 <div class="openai-loader" id="custom-search-loader" style="display: none;margin: auto;"></div>

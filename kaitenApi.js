@@ -38,6 +38,7 @@ export const fetchKaitenAllData = async () => {
                 const responsibleMember = obj.members?.find(member => member.type === 2);
                 return {
                     id: obj.id,
+                    type: obj.type.name,
                     title: obj.title,
                     description: obj.description?.slice(0, 10000) || "",
                     archived: obj.archived,
@@ -47,7 +48,7 @@ export const fetchKaitenAllData = async () => {
                     blocked: obj.blocked,
                     size_text: obj.size_text,
                     completed_at: obj.completed_at || obj.last_moved_to_done_at,
-                    responsible: responsibleMember?.full_name || obj.owner?.full_name || "Unassigned",
+                    responsible: responsibleMember?.full_name || obj.owner?.full_name || "Unassigned"
                 }
             });
 

@@ -1,6 +1,9 @@
 export const css = 
 `
 <style>
+    #custom-search-result {
+        color: rgba(0, 0, 0, 0.87);
+    }
     #custom-search-result a:hover {
         background: #eff1f1;
         color: #9c27b0;
@@ -14,6 +17,7 @@ export const css =
         display: inline-block;
         width: 90%;
         vertical-align: middle;
+        color: rgba(0, 0, 0, 0.87);
     }
     
     .task-searcher-button:hover {
