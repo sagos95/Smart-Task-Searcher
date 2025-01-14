@@ -203,7 +203,6 @@ async function start() {
         const headerButtonsContainer = await waitForElement('header > div > div:nth-child(2) > div:nth-child(2)', 500, 10000);
 
         const topButton = document.createElement('button');
-        topButton.className = 'v5-v559 css-1hwqkh2';
         topButton.id = 'custom-header-button';
         const innerButtonContent = document.createElement('template');
         innerButtonContent.innerHTML = `
