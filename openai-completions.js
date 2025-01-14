@@ -13,26 +13,47 @@ const CacheApiWrapper = (await import(chrome.runtime.getURL("cacheApiWrapper.js"
 const cacheApi = new CacheApiWrapper("sts-embeddings/space-id=", 15 * 60 * 1000);
 
 export async function executeSearch(question, dataToSearch, spaceId) {
-    const improvedEmbeddingQuery = await getImprovedEmbeddingQuery(question);
+    //const improvedEmbeddingQuery = await getImprovedEmbeddingQuery(question);
     
-    const queryEmbedding = await getEmbeddingsCachedVersion([improvedEmbeddingQuery], `text_${improvedEmbeddingQuery}`);
+    const queryEmbedding = await getEmbeddingsCachedVersion([question], `text_${question}`);
     
     // todo: метод для конвертации карточки с названием и дескрипшном в одну строку. надо запихнуть это вместе в эмбеддинг, а не только тайтл
     // todo: композиция именно параметров типа "title:, owner:" будет ухудшать качество семантического поиска.
     //       для поиска по параметрам надо использовать предварительный gpt shot и параметры API 
     const cardTexts = dataToSearch.map(d => JSON.stringify(d));
-    const cardEmbeddings = (await getEmbeddingsCachedVersion(cardTexts, `space-id_${spaceId}`));
+    const cardTitles = dataToSearch.map(d => JSON.stringify(d.title));
+    const cardDescription = dataToSearch.map(d => JSON.stringify(d.description));
+    const cardResponsible = dataToSearch.map(d => JSON.stringify(d.responsible));
     
-    const nearestEmbeddings = findTopNCosine(cardEmbeddings, queryEmbedding[0], 100);
-    console.log("Nearest embeddings:", nearestEmbeddings);
-    const similarEmbeddings = nearestEmbeddings.filter(e => e.similarity >= 0.3);
-    console.log("Similar embeddings:", similarEmbeddings);
-    const promptAugmentation = similarEmbeddings.reduce((sum, embedding) => {
+    const cardEmbeddings = (await getEmbeddingsCachedVersion(cardTexts, `space-id_${spaceId}`));
+    const cardTitlesEmbeddings = (await getEmbeddingsCachedVersion(cardTitles, `space-id_titles_${spaceId}`));
+    const cardDescriptionEmbeddings = (await getEmbeddingsCachedVersion(cardDescription, `space-id_description_${spaceId}`));
+    const cardResponsibleEmbeddings = (await getEmbeddingsCachedVersion(cardResponsible, `space-id_responsible_${spaceId}`));
+
+
+    // Агрегация схожести по всем полям для каждой карточки
+    const similarities = dataToSearch.map((card, index) => {
+        const cardSimilarity = cosineSimilarity(queryEmbedding[0], cardEmbeddings[index]);
+        const titleSimilarity = cosineSimilarity(queryEmbedding[0], cardTitlesEmbeddings[index]);
+        const descriptionSimilarity = cosineSimilarity(queryEmbedding[0], cardDescriptionEmbeddings[index]);
+        const responsibleSimilarity = cosineSimilarity(queryEmbedding[0], cardResponsibleEmbeddings[index]);
+
+        // Усредняем схожесть или используем другую функцию агрегации
+        const aggregatedSimilarity = (cardSimilarity + titleSimilarity + descriptionSimilarity + responsibleSimilarity) / 4;
+
+        return { cardId: card.id, similarity: aggregatedSimilarity };
+    });
+
+    // Сортируем карточки по схожести
+    const sortedCards = similarities.sort((a, b) => b.similarity - a.similarity);
+    
+    const promptAugmentation = sortedCards.reduce((sum, embedding) => {
         const card = dataToSearch[embedding.vector.index];
         return card 
             ? sum + `${JSON.stringify(card)}\n\n\n`
             : sum;
     }, '');
+    console.log("Proper cards with augmentation:", promptAugmentation);
     
     const response = await getCompletion([{role: "system", content: getSearchPrompt(question, promptAugmentation, spaceId)}]);
     console.log("Final response:", response);
@@ -169,9 +190,9 @@ async function getEmbeddings(inputArray, options = {}) {
     
     const response = await sendRequest("embeddings", "POST", {
         input: inputArray,
-        // model: "text-embedding-ada-002", // $0.100 / 1M tokens
+        model: "text-embedding-ada-002", // $0.100 / 1M tokens
         // model: "text-embedding-3-large", // $0.130 / 1M tokens
-        model: "text-embedding-3-small", // $0.020 / 1M tokens
+        // model: "text-embedding-3-small", // $0.020 / 1M tokens
         encoding_format: "float",
         ...options
     });
