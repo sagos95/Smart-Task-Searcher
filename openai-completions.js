@@ -33,10 +33,11 @@ async function parseUserSearch(question) {
       Важный момент: если пользователь использует разговорные формы имён, 
       постарайся раскрыть их и добавить несколько возможных синонимов. 
       Например, если пользователь говорит "Лёша" или "Леша", 
-      то нужно в "responsibles" добавить и "Лёша Саранцев" (как он сказал),
-      и "Alexey Sarantsev" (если понимаешь, что это одно и то же лицо) и еще несколько вариантов написания на английском
+      то нужно в "responsibles" добавить и "Лёша Васнецов" (как он сказал),
+      и "Alexey Vasnetsov" (если понимаешь, что это одно и то же лицо) и еще несколько вариантов написания на английском
       чтобы учитывались к примеру варианты имен Alexey и Aleksei и Aleksey и т.д.
-      Итоговый JSON может содержать в "responsibles" оба варианта, чтобы не потерять смысл.
+      Делай так со всеми именами
+      Итоговый JSON может содержать в "responsibles" все варианты, чтобы не потерять смысл.
       
       Если чего-то нет, возвращай пустые массивы/пустую строку. 
       Ответ строго в формате JSON, без текста снаружи. Не нужно добавлять markdown и прочее. Строго в формате JSON
@@ -131,7 +132,7 @@ export async function executeSearch(question, dataToSearch, spaceId) {
 
     // 5) Получаем эмбеддинги для всех отфильтрованных карточек
     const cardTexts = filteredCards.map(d => JSON.stringify(d));
-    const cardEmbeddings = await getEmbeddingsCachedVersion(cardTexts, `space-id_${spaceId}`);
+    const cardEmbeddings = await getEmbeddings(cardTexts);
 
     // 6) Ищем топ-N похожих (например, 100)
     const nearestEmbeddings = findTopNCosine(cardEmbeddings, queryEmbedding[0], 100);
