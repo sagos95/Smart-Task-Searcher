@@ -49,9 +49,10 @@ async function parseUserSearch(question) {
         const responseRaw = await getCompletion([
             { role: "system", content: systemPrompt },
             { role: "user", content: question }
-        ]);
+        ], {"response_format": { "type": "json_object" }});
+        console.log("Parse user search filter raw:", responseRaw);
         const parsed = JSON.parse(responseRaw);
-
+        
         return {
             responsibles: Array.isArray(parsed.responsibles) ? parsed.responsibles : [],
             years: Array.isArray(parsed.years) ? parsed.years : [],
@@ -122,7 +123,8 @@ export async function executeSearch(question, dataToSearch, spaceId) {
 
     // 2) Фильтруем карточки по этим параметрам
     const filteredCards = filterCardsByParams(dataToSearch, { responsibles, years, exclude });
-
+    console.log("Filtered cards:", filteredCards);
+    
     // 3) Семантический поиск делаем по отфильтрованным (а не по всем)
     //    Сначала получаем "улучшенный" запрос для эмбеддингов (через ваш уже существующий метод):
     const improvedEmbeddingQuery = await getImprovedEmbeddingQuery(cleanQuery);
@@ -176,9 +178,9 @@ function getSearchPrompt(userQuery, augmentedContext, spaceId) {
         и оформи итоговый ответ с указанием ссылок на карточки в следующем виде html разметки (т.е. сделай сам title
         карточек кликабельными ссылками):
         "
-        • <a href='${urlForCards}/ID_КАРТОЧКИ_1'>TITLE_КАРТОЧКИ_1</a>
+        <a href='${urlForCards}/ID_КАРТОЧКИ_1'>TITLE_КАРТОЧКИ_1</a>
         <br>
-        • <a href='${urlForCards}/ID_КАРТОЧКИ_2'>TITLE_КАРТОЧКИ_2</a>
+        <a href='${urlForCards}/ID_КАРТОЧКИ_2'>TITLE_КАРТОЧКИ_2</a>
         ...
         ".
         - При этом не обязательно выдавать сухой список ссылок, и если это будет необходимо для понимания, можно дать
@@ -271,6 +273,7 @@ async function getCompletion(messages, options = {}) {
     const response = await sendRequest("chat/completions", "POST", {
         model: "gpt-4o",
         messages: messages,
+        max_tokens: 10000,
         ...options
     });
     return response.choices[0].message.content;

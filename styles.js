@@ -9,16 +9,16 @@ export const css =
         color: #9c27b0;
     }
     
-    #custom-search-result a {
-        padding: 5px;
-        border-radius: 4px;
-        text-decoration: none;
-        border: 1px solid #d3d3d3;
-        display: inline-block;
-        width: 90%;
-        vertical-align: middle;
-        color: rgba(0, 0, 0, 0.87);
-    }
+    /*#custom-search-result a {*/
+    /*    padding: 5px;*/
+    /*    border-radius: 4px;*/
+    /*    text-decoration: none;*/
+    /*    border: 1px solid #d3d3d3;*/
+    /*    display: inline-block;*/
+    /*    width: 90%;*/
+    /*    vertical-align: middle;*/
+    /*    color: rgba(0, 0, 0, 0.87);*/
+    /*}*/
     
     .task-searcher-button:hover {
         background: #eff1f1 !important;
