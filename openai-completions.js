@@ -126,7 +126,7 @@ export async function executeSearch(question, dataToSearch, spaceId) {
     console.log("Filtered cards:", filteredCards);
     
     // 3) Семантический поиск делаем по отфильтрованным (а не по всем)
-    //    Сначала получаем "улучшенный" запрос для эмбеддингов (через ваш уже существующий метод):
+    //    Сначала получаем "улучшенный" запрос для эмбеддингов:
     const improvedEmbeddingQuery = await getImprovedEmbeddingQuery(cleanQuery);
 
     // 4) Получаем эмбеддинг для запроса
