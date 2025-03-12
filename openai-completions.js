@@ -122,8 +122,13 @@ export async function executeSearch(question, dataToSearch, spaceId) {
     const { responsibles, years, exclude, cleanQuery } = await parseUserSearch(question);
 
     // 2) Фильтруем карточки по этим параметрам
-    const filteredCards = filterCardsByParams(dataToSearch, { responsibles, years, exclude });
+    let filteredCards = filterCardsByParams(dataToSearch, { responsibles, years, exclude });
     console.log("Filtered cards:", filteredCards);
+    
+    if(filteredCards.length === 0) {
+        filteredCards = dataToSearch;
+        console.log("Cant correctly filter cards. Passing all raw data to query", filteredCards);
+    }
     
     // 3) Семантический поиск делаем по отфильтрованным (а не по всем)
     //    Сначала получаем "улучшенный" запрос для эмбеддингов:
