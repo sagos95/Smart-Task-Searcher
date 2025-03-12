@@ -12,37 +12,162 @@ chrome.storage.local.get(['API_URL', 'ACCESS_TOKEN', 'OPENAI_KEY'], (result) => 
 const CacheApiWrapper = (await import(chrome.runtime.getURL("cacheApiWrapper.js"))).CacheApiWrapper;
 const cacheApi = new CacheApiWrapper("sts-embeddings/space-id=", 15 * 60 * 1000);
 
+/**
+ * Эта функция вызывает GPT, чтобы понять, какие параметры фильтрации нужны:
+ * - например, "ответственные" (responsibles),
+ * - годы (years),
+ * - слова, которые надо исключить (exclude),
+ * - "чистый" запрос (cleanQuery) для эмбеддингов.
+ * В реальном проекте вы можете усложнить этот JSON – всё зависит от ваших нужд.
+ */
+async function parseUserSearch(question) {
+    const systemPrompt = `
+      Ты – помощник, который разбирает текст запроса пользователя и превращает его в JSON-структуру:
+      {
+        "responsibles": ["...","..."],  // все упомянутые люди
+        "years": [2023, 2024],          // все упомянутые годы
+        "exclude": ["...","..."],       // ключевые слова, которые надо исключить
+        "cleanQuery": "..."            // текст, который можно использовать для эмбеддингов
+      }
+      
+      Важный момент: если пользователь использует разговорные формы имён, 
+      постарайся раскрыть их и добавить несколько возможных синонимов. 
+      Например, если пользователь говорит "Лёша" или "Леша", 
+      то нужно в "responsibles" добавить и "Лёша Васнецов" (как он сказал),
+      и "Alexey Vasnetsov" (если понимаешь, что это одно и то же лицо) и еще несколько вариантов написания на английском
+      чтобы учитывались к примеру варианты имен Alexey и Aleksei и Aleksey и т.д.
+      Делай так со всеми именами
+      Итоговый JSON может содержать в "responsibles" все варианты, чтобы не потерять смысл.
+      
+      Если чего-то нет, возвращай пустые массивы/пустую строку. 
+      Ответ строго в формате JSON, без текста снаружи. Не нужно добавлять markdown и прочее. Строго в формате JSON
+    `;
+
+    // Вызываем GPT (через ваш существующий метод getCompletion).
+    // Он вернёт нам строку, которую попытаемся JSON.parse.
+    try {
+        const responseRaw = await getCompletion([
+            { role: "system", content: systemPrompt },
+            { role: "user", content: question }
+        ], {"response_format": { "type": "json_object" }});
+        console.log("Parse user search filter raw:", responseRaw);
+        const parsed = JSON.parse(responseRaw);
+        
+        return {
+            responsibles: Array.isArray(parsed.responsibles) ? parsed.responsibles : [],
+            years: Array.isArray(parsed.years) ? parsed.years : [],
+            exclude: Array.isArray(parsed.exclude) ? parsed.exclude : [],
+            cleanQuery: parsed.cleanQuery || question
+        };
+    } catch (e) {
+        // Если что-то пошло не так (GPT не вернул валидный JSON и т.п.),
+        // просто вернём пустые массивы и исходный question.
+        return {
+            responsibles: [],
+            years: [],
+            exclude: [],
+            cleanQuery: question
+        };
+    }
+}
+
+/**
+ * Фильтрация карточек на основе извлечённых параметров:
+ * 1) Если указаны конкретные "responsibles", оставляем только те, у кого поле card.responsible
+ *    содержит хотя бы одно из имён.
+ * 2) Если указаны годы, проверяем start_work_at и completed_at.
+ * 3) Если есть exclude, исключаем карточки, в title/description которых встречаются эти слова.
+ */
+function filterCardsByParams(cards, { responsibles, years, exclude }) {
+    return cards.filter(card => {
+        // 1) Проверяем ответственных
+        if (responsibles.length > 0) {
+            const cardResp = (card.responsible || "").toLowerCase();
+            // Карточка подходит, если в её responsible упоминается хотя бы один из responsibles
+            const matchSomeone = responsibles.some(r => cardResp.includes(r.toLowerCase()));
+            if (!matchSomeone) return false;
+        }
+
+        // 2) Проверяем годы. Для простоты: считаем, что 
+        //    если start_work_at или completed_at попадает в какой-то из указанных годов,
+        //    то задача проходит.
+        if (years.length > 0) {
+            const startYear = card.start_work_at ? new Date(card.start_work_at).getFullYear() : null;
+            const endYear = card.completed_at ? new Date(card.completed_at).getFullYear() : null;
+            // Если оба null, значит карточка вообще не имеет дат
+            if (!startYear && !endYear) return false;
+
+            // Если год старта или завершения попадает в указанные years – ок
+            const inRange = (startYear && years.includes(startYear))
+                || (endYear && years.includes(endYear));
+            if (!inRange) return false;
+        }
+
+        // 3) exclude. Если в title+description есть хоть одно стоп-слово, исключаем
+        if (exclude.length > 0) {
+            const text = (card.title + " " + (card.description || "")).toLowerCase();
+            for (let stopWord of exclude) {
+                if (text.includes(stopWord.toLowerCase())) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    });
+}
+
 export async function executeSearch(question, dataToSearch, spaceId) {
-    const improvedEmbeddingQuery = await getImprovedEmbeddingQuery(question);
+    // 1) Разбираем запрос в структуру (responsibles, years, exclude, cleanQuery)
+    const { responsibles, years, exclude, cleanQuery } = await parseUserSearch(question);
+
+    // 2) Фильтруем карточки по этим параметрам
+    let filteredCards = filterCardsByParams(dataToSearch, { responsibles, years, exclude });
+    console.log("Filtered cards:", filteredCards);
     
+    if(filteredCards.length === 0) {
+        filteredCards = dataToSearch;
+        console.log("Cant correctly filter cards. Passing all raw data to query", filteredCards);
+    }
+    
+    // 3) Семантический поиск делаем по отфильтрованным (а не по всем)
+    //    Сначала получаем "улучшенный" запрос для эмбеддингов:
+    const improvedEmbeddingQuery = await getImprovedEmbeddingQuery(cleanQuery);
+
+    // 4) Получаем эмбеддинг для запроса
     const queryEmbedding = await getEmbeddingsCachedVersion([improvedEmbeddingQuery], `text_${improvedEmbeddingQuery}`);
-    
-    // todo: метод для конвертации карточки с названием и дескрипшном в одну строку. надо запихнуть это вместе в эмбеддинг, а не только тайтл
-    // todo: композиция именно параметров типа "title:, owner:" будет ухудшать качество семантического поиска.
-    //       для поиска по параметрам надо использовать предварительный gpt shot и параметры API 
-    const cardTexts = dataToSearch.map(d => JSON.stringify(d));
-    const cardEmbeddings = (await getEmbeddingsCachedVersion(cardTexts, `space-id_${spaceId}`));
-    
+
+    // 5) Получаем эмбеддинги для всех отфильтрованных карточек
+    const cardTexts = filteredCards.map(d => JSON.stringify(d));
+    const cardEmbeddings = await getEmbeddings(cardTexts);
+
+    // 6) Ищем топ-N похожих (например, 100)
     const nearestEmbeddings = findTopNCosine(cardEmbeddings, queryEmbedding[0], 100);
     console.log("Nearest embeddings:", nearestEmbeddings);
-    const similarEmbeddings = nearestEmbeddings.filter(e => e.similarity >= 0.3);
-    console.log("Similar embeddings:", similarEmbeddings);
-    const promptAugmentation = similarEmbeddings.reduce((sum, embedding) => {
-        const card = dataToSearch[embedding.vector.index];
-        return card 
+
+    // 8) Собираем контекст для prompt
+    const promptAugmentation = nearestEmbeddings.reduce((sum, embedding) => {
+        const card = filteredCards[embedding.vector.index];
+        return card
             ? sum + `${JSON.stringify(card)}\n\n\n`
             : sum;
     }, '');
-    
-    const response = await getCompletion([{role: "system", content: getSearchPrompt(question, promptAugmentation, spaceId)}]);
+
+    // 9) Запрашиваем у GPT итоговый ответ (список ссылок и пояснений)
+    const response = await getCompletion([
+        {
+            role: "system",
+            content: getSearchPrompt(question, promptAugmentation, spaceId)
+        }
+    ]);
     console.log("Final response:", response);
-    
+
     return response;
 }
 
 
+// ================================= Chat GPT logic (не меняем)
 
-// ================================= Chat GPT logic
 function getSearchPrompt(userQuery, augmentedContext, spaceId) {
     const urlForCards = `https://dodopizza.kaiten.ru/space/${spaceId}/card`;
     const prompt =
@@ -58,9 +183,9 @@ function getSearchPrompt(userQuery, augmentedContext, spaceId) {
         и оформи итоговый ответ с указанием ссылок на карточки в следующем виде html разметки (т.е. сделай сам title
         карточек кликабельными ссылками):
         "
-        • <a href='${urlForCards}/ID_КАРТОЧКИ_1'>TITLE_КАРТОЧКИ_1</a>
+        <a href='${urlForCards}/ID_КАРТОЧКИ_1'>TITLE_КАРТОЧКИ_1</a>
         <br>
-        • <a href='${urlForCards}/ID_КАРТОЧКИ_2'>TITLE_КАРТОЧКИ_2</a>
+        <a href='${urlForCards}/ID_КАРТОЧКИ_2'>TITLE_КАРТОЧКИ_2</a>
         ...
         ".
         - При этом не обязательно выдавать сухой список ссылок, и если это будет необходимо для понимания, можно дать
@@ -100,23 +225,17 @@ async function getImprovedEmbeddingQuery(question) {
         [{role: "system", content: getEmbeddingSearchTermPrompt(question)}],
         {response_format: {type: "json_schema", json_schema: jsonSchema}});
     const response = JSON.parse(responseRaw);
-    
+
     if ((response.error_description && response.error_description !== '') || !response.improved_embedding_query)
         throw new Error(`Bad question error: ${response.error_description}`);
-    
+
     console.log(`Improved embedding query: ${response.improved_embedding_query}`);
     return response.improved_embedding_query;
 }
 
 
+// ================================= Semantic search (не меняем)
 
-
-
-
-
-
-
-// ================================= Semantic search
 function cosineSimilarity(vectorA, vectorB) {
     const dotProduct = vectorA.reduce((sum, a, idx) => sum + a * vectorB[idx], 0);
     const magnitudeA = Math.sqrt(vectorA.reduce((sum, a) => sum + a * a, 0));
@@ -145,11 +264,12 @@ function findTopNCosine(embeddings, queryVector, N) {
 }
 
 
-// ================================= OpenAI API
+// ================================= OpenAI API (не меняем)
+
 export async function testCompletion() {
     const response = await getCompletion([{role: "user",content: "Hello! Respond something so I can understand that you are working"}]);
     console.log("Successful completions test:", response);
-    
+
     const embeddings = await getEmbeddings(["Big red fox is jumping", "Big red fox is running"]);
     console.log("Successful embeddings test:", embeddings);
 }
@@ -158,15 +278,16 @@ async function getCompletion(messages, options = {}) {
     const response = await sendRequest("chat/completions", "POST", {
         model: "gpt-4o",
         messages: messages,
+        max_tokens: 10000,
         ...options
-    })
+    });
     return response.choices[0].message.content;
 }
 
 async function getEmbeddings(inputArray, options = {}) {
     if (inputArray.length === 0)
         return [];
-    
+
     const response = await sendRequest("embeddings", "POST", {
         input: inputArray,
         // model: "text-embedding-ada-002", // $0.100 / 1M tokens
@@ -206,3 +327,4 @@ async function sendRequest(urlPath, method, payload) {
         throw error;
     }
 }
+

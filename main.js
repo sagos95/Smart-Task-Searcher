@@ -158,6 +158,7 @@ async function start() {
                 </button>
               </div>
               <div style="font-size: 0.7rem;color: #9e9e9e;">Поиск производится по задачам из текущего пространства #${SPACE_ID}</div>
+              <div style="font-size: 0.7rem;color: #9e9e9e;"><a href="https://dodobrands.loop.ru/dodo-brands/channels/smart-task-searcher">Канал в loop для обратной связи</a></div>
               <!-- Лоадер -->
               <div>
                 <div class="openai-loader" id="custom-search-loader" style="display: none;margin: auto;"></div>
