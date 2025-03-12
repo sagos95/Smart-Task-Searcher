@@ -47,7 +47,7 @@ export class CacheApiWrapper {
 
     async withCacheApi(key, fn) {
         const cachedData = await this.get(key);
-        if (cachedData) {
+        if (cachedData && cachedData.length > 0) {
             console.log("Returning cached data from Cache API...");
             return cachedData;
         }
